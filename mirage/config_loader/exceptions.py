@@ -1,0 +1,2 @@
+class ConfigParseException(Exception):
+    pass

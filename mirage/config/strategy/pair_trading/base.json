@@ -1,4 +1,5 @@
 {
+    "TYPE": "SIMPLE",
     "PRIORITY": 0,
     "max_open_trades": 5
 }

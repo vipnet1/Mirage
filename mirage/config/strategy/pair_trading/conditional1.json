@@ -1,6 +1,7 @@
 {
+    "TYPE": "CONDITIONAL",
     "PRIORITY": 4,
-    "if": [
+    "IF": [
         {
 
         },
@@ -12,7 +13,7 @@
         }
     ],
 
-    "then": {
+    "THEN": {
         "max-open_trades": 2
     }
 }

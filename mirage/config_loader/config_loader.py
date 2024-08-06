@@ -16,6 +16,7 @@ class ConfigType(Enum):
 
 
 class ConfigLoader:
+    KEY_SENSITIVE_KEYS = 'SENSITIVE_KEYS'
     KEY_TYPE = 'TYPE'
     KEY_PRIORITY = 'PRIORITY'
     KEY_IF = 'IF'
@@ -26,7 +27,7 @@ class ConfigLoader:
         self._conditional_info = conditional_info
         self.config = None
 
-    def load_config(self):
+    def load_config(self) -> None:
         configs = self._load_config_files()
         self._validate_configs(configs)
         self.config = self._parse_configs(configs)
@@ -41,7 +42,7 @@ class ConfigLoader:
 
         return ready_config
 
-    def _parse_config(self, config: Dict[str: Any]):
+    def _parse_config(self, config: Config) -> Config:
         match(ConfigType[config[self.KEY_PRIORITY]]):
             case ConfigType.SIMPLE:
                 return config
@@ -55,7 +56,7 @@ class ConfigLoader:
 
         return {}
 
-    def _are_conditions_met(self, conditions: Dict[str: Any]):
+    def _are_conditions_met(self, conditions: Dict[str: Any]) -> bool:
         for key in conditions:
             try:
                 if conditions[key] != self._conditional_info[key]:
@@ -75,12 +76,13 @@ class ConfigLoader:
 
         return configs
 
-    def _validate_configs(self, configs: Configs):
+    def _validate_configs(self, configs: Configs) -> None:
         self._validate_type(configs)
         self._validate_priority(configs)
         self._validate_conditional_configs(configs)
+        self._validate_sensitive_keys(configs)
 
-    def _validate_type(self, configs: Configs):
+    def _validate_type(self, configs: Configs) -> None:
         for filepath in configs:
             config = configs[filepath]
             config_type = config.get(self.KEY_TYPE, ConfigType.SIMPLE.name)
@@ -90,7 +92,7 @@ class ConfigLoader:
                 raise ConfigParseException(
                     f'Invalid config type {config_type}. File: {filepath}.') from exc
 
-    def _validate_priority(self, configs: Configs):
+    def _validate_priority(self, configs: Configs) -> None:
         found_priorities = set()
         for filepath in configs:
             config = configs[filepath]
@@ -100,9 +102,26 @@ class ConfigLoader:
                     f'Configuration with duplicate priority. File: {filepath}. '
                     f'Priority: {priority}')
 
-    def _validate_conditional_configs(self, configs: Configs):
+    def _validate_sensitive_keys(self, configs: Configs) -> None:
+        for filepath in configs:
+            config = configs[filepath]
+            sensitive_keys = config.get(self.KEY_SENSITIVE_KEYS, [])
+            if not sensitive_keys:
+                continue
+
+            config_type = config.get(self.KEY_TYPE, ConfigType.SIMPLE.name)
+            config_info = config
+            if config_type == ConfigType.CONDITIONAL:
+                config_info = config[self.KEY_THEN]
+
+            for sensitive_key in sensitive_keys:
+                if sensitive_key in config_info and isinstance(config_info[sensitive_key], str):
+                    raise ConfigParseException(f'Sensitive keys must be strings. File: {filepath}. '
+                                               f'Key: {sensitive_key}')
+
+    def _validate_conditional_configs(self, configs: Configs) -> None:
         required_keys = {self.KEY_IF, self.KEY_THEN}
-        allowed_keys = {self.KEY_TYPE, self.KEY_PRIORITY,
+        allowed_keys = {self.KEY_TYPE, self.KEY_PRIORITY, self.KEY_SENSITIVE_KEYS,
                         self.KEY_IF, self.KEY_THEN}
 
         for filepath in configs:

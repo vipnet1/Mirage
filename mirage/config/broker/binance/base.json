@@ -1,5 +1,5 @@
 {
-    "sensitive_keys": ["api_key", "secret_key"],
+    "SENSITIVE_KEYS": ["api_key", "secret_key"],
     "api_key": "TEST",
     "secret_key": "TEST"
 }

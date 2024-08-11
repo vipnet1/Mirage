@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, Double
-from history import database
+from history import db_config
 
 
-class Trade(database.Base):
+class Trade(db_config.Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
 

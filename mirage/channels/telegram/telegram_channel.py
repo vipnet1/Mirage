@@ -26,4 +26,3 @@ class TelegramChannel():
         return asyncio.create_task(
             self._application.bot.send_message(chat_id=self._chat_id, text=message)
         )
-

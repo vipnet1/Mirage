@@ -1,5 +1,5 @@
 import sqlalchemy as sa
-import consts
+from mirage import consts
 
 engine = sa.create_engine(
     f'sqlite:///{consts.DATABASES_FOLDER}/{consts.HISTORY_DB_NAME}')

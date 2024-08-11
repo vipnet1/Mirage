@@ -1,5 +1,9 @@
 shortcuts.txt
-mirage/databases/
+
+# Fine while no sensitive info, add to gitignore once does appear
+# .vscode
+# .config
+# .databases
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

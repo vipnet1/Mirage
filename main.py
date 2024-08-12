@@ -1,14 +1,17 @@
-from mirage.config_loader.config import Config
-from mirage.config_loader.config_loader import ConfigLoader
-from mirage.channels.telegram.telegram_channel import TelegramChannel
+import asyncio
+import signal
+import time
+from mirage_nexus import MirageNexus
+
+def signal_handler(sig, frame):
+    asyncio.run(MirageNexus().shutdown())
 
 def main():
-    config_loader = ConfigLoader()
-    configuration: Config = config_loader.load_config()
+    signal.signal(signal.SIGINT, signal_handler)
+    asyncio.run(MirageNexus().bootstrap())
 
-    telegram_channel: TelegramChannel = TelegramChannel(configuration)
-    telegram_channel.run()
-    print('test')
+    while True:
+        time.sleep(1)
 
 
 if __name__ == '__main__':

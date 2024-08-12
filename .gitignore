@@ -1,9 +1,9 @@
 shortcuts.txt
 
-# Fine while no sensitive info, add to gitignore once does appear
-# .vscode
-# .config
-# .databases
+.vscode/
+.config/
+.databases/
+.logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

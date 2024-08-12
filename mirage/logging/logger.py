@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 import datetime
 from logging.handlers import RotatingFileHandler
-from mirage import consts
+import consts
 
 
 def get_logger(name):

@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Double
-from history import db_config
+from mirage.history import db_config
 
 
 class Trade(db_config.Base):

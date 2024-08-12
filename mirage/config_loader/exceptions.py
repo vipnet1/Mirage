@@ -1,2 +1,2 @@
-class ConfigParseException(Exception):
+class ConfigKeyException(Exception):
     pass

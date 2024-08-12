@@ -1,5 +1,5 @@
 from pathlib import Path
-from mirage import consts
+import consts
 
 
 def bootstrap():

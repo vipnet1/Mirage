@@ -1,9 +1,8 @@
 import asyncio
-from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
-from config_loader import sensitive_keys
-from config_loader.config_loader import Config
-from channels.telegram import commands
+from mirage.config_loader import sensitive_keys
+from mirage.config_loader.config_loader import Config
+from mirage.channels.telegram import commands
 
 
 class TelegramChannel():

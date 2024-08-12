@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from brokers.broker import Broker
+from mirage.brokers.broker import Broker
 
 
 class Binance(Broker):

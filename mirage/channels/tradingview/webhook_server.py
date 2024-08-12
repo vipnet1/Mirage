@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI, Request
 import asyncio
 from mirage.channels.tradingview import commands
-from mirage import consts
+import consts
 
 
 class WebhookServer:

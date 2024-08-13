@@ -1,18 +1,31 @@
 import asyncio
 import signal
-import time
-from mirage_nexus import MirageNexus
+from mirage.mirage_nexus import MirageNexus
+
+shutdown_flag = False
+
 
 def signal_handler(sig, frame):
-    asyncio.run(MirageNexus().shutdown())
+    global shutdown_flag
 
-def main():
+    shutdown_flag = True
+
+
+async def main():
+    global shutdown_flag
+
+    mirage_nexus = MirageNexus()
+    await mirage_nexus.bootstrap()
+
     signal.signal(signal.SIGINT, signal_handler)
-    asyncio.run(MirageNexus().bootstrap())
 
-    while True:
-        time.sleep(1)
+    print("Main loop running...")
+    while not shutdown_flag:
+        await asyncio.sleep(1)
+
+    await mirage_nexus.shutdown()
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
+    print('Mirage terminated')

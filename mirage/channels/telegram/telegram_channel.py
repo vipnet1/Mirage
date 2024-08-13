@@ -1,5 +1,4 @@
-import asyncio
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler
 from mirage.config_loader.config import Config
 from mirage.channels.telegram import commands
 
@@ -11,27 +10,22 @@ class TelegramChannel():
     def __init__(self, configuration: Config):
         self._configuration = configuration
 
-        self._application = Application.builder().token(self._configuration.get(self.KEY_TOKEN)).build()
+        self._application = ApplicationBuilder().token(self._configuration.get(self.KEY_TOKEN)).build()
         self._chat_id = self._configuration.get(self.KEY_CHAT_ID)
-
-        self._loop = None
 
     async def start(self):
         self._application.add_handlers([
             CommandHandler("start", commands.handle_start),
-            MessageHandler(filters.TEXT, filters.COMMAND, commands.handle_default)
         ])
 
-        self._loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self._loop)
-        self._loop.run_until_complete(self._application.run_polling())
-        print('Started telegram')
+        await self._application.initialize()
+        await self._application.start()
+        await self._application.updater.start_polling()
 
     async def stop(self):
-        self._loop.stop()
-        await self._loop.shutdown_asyncgens()
+        await self._application.updater.stop()
+        await self._application.stop()
+        await self._application.shutdown()
 
-    async def send_message(self, message: str):
-        return asyncio.create_task(
-            self._application.bot.send_message(chat_id=self._chat_id, text=message)
-        )
+    def send_message(self, message: str):
+        self._application.bot.send_message(chat_id=self._chat_id, text=message)

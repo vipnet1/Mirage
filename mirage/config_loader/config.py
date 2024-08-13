@@ -1,6 +1,7 @@
 from typing import Dict, Any
 from mirage.config_loader.exceptions import ConfigKeyException
 
+
 class Config:
     def __init__(self, config_raw: Dict[str, Any]):
         self.config_raw = config_raw

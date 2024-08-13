@@ -1,2 +1,5 @@
+import logging
+
+
 def handle_tradingview_webhook(data):
-    print(f"Received webhook data: {data}")
+    logging.info('Received webhook data: %s', data)

@@ -1,7 +1,7 @@
+import asyncio
 import uvicorn
 from fastapi import FastAPI, Request
-import asyncio
-from mirage.channels.tradingview import commands
+from mirage.channels.trading_view import commands
 import consts
 
 
@@ -24,6 +24,3 @@ class WebhookServer:
             )
         )
         await server.serve()
-
-    def start(self):
-        asyncio.run(self.run_server())

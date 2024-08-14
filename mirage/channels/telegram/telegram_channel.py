@@ -1,9 +1,10 @@
 from telegram.ext import ApplicationBuilder, CommandHandler
+from mirage.channels.communication_channel import CommunicationChannel
 from mirage.config_loader.config import Config
 from mirage.channels.telegram import commands
 
 
-class TelegramChannel():
+class TelegramChannel(CommunicationChannel):
     KEY_TOKEN = 'channels.telegram.token'
     KEY_CHAT_ID = 'channels.telegram.chat_id'
 
@@ -27,5 +28,5 @@ class TelegramChannel():
         await self._application.stop()
         await self._application.shutdown()
 
-    def send_message(self, message: str):
-        self._application.bot.send_message(chat_id=self._chat_id, text=message)
+    async def send_message(self, message: str):
+        await self._application.bot.send_message(chat_id=self._chat_id, text=message)

@@ -19,7 +19,7 @@ class WebhookHandler:
 
         insert_records([
             RequestData(
-                source='test',
-                content='Its the received request content',
+                source='trading_view',
+                content=str(self._request_json),
             )
         ])

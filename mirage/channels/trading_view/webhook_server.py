@@ -1,8 +1,7 @@
-import asyncio
 import uvicorn
 from fastapi import FastAPI, Request
-from mirage.channels.trading_view import commands
 import consts
+from mirage.channels.trading_view.webhook_handler import WebhookHandler
 
 
 class WebhookServer:
@@ -12,7 +11,10 @@ class WebhookServer:
         @self.app.post(consts.WEBHOOK_SERVER_ENDPOINT)
         async def webhook_endpoint(request: Request):
             data = await request.json()
-            asyncio.create_task(commands.handle_tradingview_webhook(data))
+
+            webhook_handler = WebhookHandler(data)
+            await webhook_handler.process_request()
+
             return {"status": "success"}
 
     async def run_server(self):

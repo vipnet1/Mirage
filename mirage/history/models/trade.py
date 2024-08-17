@@ -1,10 +1,10 @@
 from sqlalchemy import Column, Integer, String, Double
-from mirage.history import db_config
+from mirage.history.history_db_config import Base
 
 
-class Trade(db_config.Base):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
+class Trade(Base):
+    __tablename__ = 'trade'
+    id = Column(Integer, primary_key=True, autoincrement=True)
 
     first_symbol = Column(String)
     first_amount = Column(Double)

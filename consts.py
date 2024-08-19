@@ -1,5 +1,9 @@
 import logging
 
+CHANNEL_TELEGRAM = 'telegram'
+CHANNEL_TRADING_VIEW = 'trading_view'
+
+PREFERRED_COMMUNICATION_CHANNEL = CHANNEL_TELEGRAM
 CONFIG_FILENAME = 'config.json'
 
 CONFIG_FOLDER = '.config'

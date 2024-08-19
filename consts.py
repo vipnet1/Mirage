@@ -1,6 +1,8 @@
 import logging
 
-CONFIG_FILE = '.config/config.json'
+CONFIG_FILENAME = 'config.json'
+
+CONFIG_FOLDER = '.config'
 LOG_FOLDER = '.logs'
 DATABASES_FOLDER = '.databases'
 

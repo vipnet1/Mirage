@@ -13,7 +13,7 @@ class Binance(Broker):
             'secret': ConfigManager.config.get(self.KEY_SECRET_KEY),
         })
 
-    def spot_place_market_order(self, symbol: str, amount: float):
+    async def spot_place_market_order(self, symbol: str, amount: float):
         order = self._exchange.create_market_buy_order(symbol, amount)
         print('placed market order')
         print(order)

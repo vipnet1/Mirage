@@ -25,11 +25,3 @@ class SuperDict:
 
     def validate_key_exists(self, key: str):
         self.get(key)
-
-    def is_key_exists(self, key: str):
-        try:
-            self.get(key)
-            return True
-
-        except SuperDictException:
-            return False

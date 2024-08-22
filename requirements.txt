@@ -2,3 +2,4 @@ sqlalchemy>=2.0.32,<3.0.0
 fastapi>=0.112.0,<1.0.0
 uvicorn>=0.30.5,<1.0.0
 python-telegram-bot>=21.4,<22.0
+ccxt>=4.3.87,<5.0.0

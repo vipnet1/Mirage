@@ -1,7 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 
 
-class Broker(ABC):
+class Broker:
+    __metaclass__ = ABCMeta
+
     @abstractmethod
     def spot_place_market_order(self, symbol: str, amount: float):
         raise NotImplementedError
@@ -24,8 +26,4 @@ class Broker(ABC):
 
     @abstractmethod
     def margin_repay(self, symbol: str, amount: float, price: float):
-        raise NotImplementedError
-
-    @abstractmethod
-    def load_config(self, symbol: str, amount: float, price: float):
         raise NotImplementedError

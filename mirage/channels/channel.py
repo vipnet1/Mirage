@@ -1,7 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 
 
-class Channel(ABC):
+class Channel:
+    __metaclass__ = ABCMeta
+
     @abstractmethod
     async def start(self):
         raise NotImplementedError()

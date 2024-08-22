@@ -1,11 +1,11 @@
 from typing import Dict, Any
 
 
-class SuperDictException(Exception):
+class MirageDictException(Exception):
     pass
 
 
-class SuperDict:
+class MirageDict:
     def __init__(self, raw_dict: Dict[str, Any]):
         self.raw_dict = raw_dict
 
@@ -17,7 +17,7 @@ class SuperDict:
                 if default_value is not None:
                     return default_value
 
-                raise SuperDictException(f'Key {key} not found')
+                raise MirageDictException(f'Key {key} not found')
 
             value = value[part]
 

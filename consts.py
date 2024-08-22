@@ -12,6 +12,8 @@ DATABASES_FOLDER = '.databases'
 
 HISTORY_DB_NAME = 'history.db'
 
+STRATEGY_MODULE_PREFIX = 'mirage.strategy'
+
 WEBHOOK_SERVER_HOST = '0.0.0.0'
 WEBHOOK_SERVER_PORT = 8080
 WEBHOOK_SERVER_ENDPOINT = '/tradingview_webhook'

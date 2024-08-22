@@ -9,4 +9,4 @@ class Config(MirageDict):
             return super().get(key, default_value)
 
         except MirageDictException as exc:
-            raise ConfigException from exc
+            raise ConfigException('Failed getting config field.') from exc

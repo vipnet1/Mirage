@@ -12,7 +12,7 @@ class ConfigLoader:
             return config
 
         except Exception as e:
-            raise ConfigLoaderException('Failed to load config file') from e
+            raise ConfigLoaderException('Failed to load config file.') from e
 
     def _load_config_file(self) -> Config:
         with open(Path(consts.CONFIG_FOLDER) / Path(consts.CONFIG_FILENAME), 'r') as file:

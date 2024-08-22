@@ -9,4 +9,4 @@ class RequestJson(MirageDict):
             return super().get(key, default_value)
 
         except MirageDictException as exc:
-            raise WebhookRequestException from exc
+            raise WebhookRequestException('Failed getting field from request json.') from exc

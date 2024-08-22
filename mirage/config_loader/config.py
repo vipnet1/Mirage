@@ -1,6 +1,9 @@
 from typing import Any
-from mirage.config_loader.exceptions import ConfigException
 from mirage.utils.mirage_dict import MirageDict, MirageDictException
+
+
+class ConfigException(Exception):
+    pass
 
 
 class Config(MirageDict):

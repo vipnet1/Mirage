@@ -1,2 +1,2 @@
-class WebhookProcessRequestException(Exception):
+class WebhookRequestException(Exception):
     pass

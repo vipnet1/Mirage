@@ -14,9 +14,9 @@ class WebhookServer:
         @self.app.post(consts.WEBHOOK_SERVER_ENDPOINT)
         async def webhook_endpoint(request: Request):
             try:
-                data = await request.json()
+                request_data = await request.json()
 
-                webhook_handler = WebhookHandler(data)
+                webhook_handler = WebhookHandler(request_data)
                 await webhook_handler.process_request()
 
             except Exception as exc:

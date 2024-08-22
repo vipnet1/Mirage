@@ -1,12 +1,12 @@
 from typing import Any
-from mirage.config_loader.exceptions import ConfigException
+from mirage.channels.trading_view.exceptions import WebhookRequestException
 from mirage.utils.super_dict import SuperDict, SuperDictException
 
 
-class Config(SuperDict):
+class RequestJson(SuperDict):
     def get(self, key: str, default_value: Any = None) -> Any:
         try:
             return super().get(key, default_value)
 
         except SuperDictException as exc:
-            raise ConfigException from exc
+            raise WebhookRequestException from exc

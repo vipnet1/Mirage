@@ -2,5 +2,5 @@ class ConfigLoaderException(Exception):
     pass
 
 
-class ConfigKeyException(Exception):
+class ConfigException(Exception):
     pass

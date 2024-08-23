@@ -1,6 +1,6 @@
 import ccxt
 from mirage.brokers.broker import Broker
-from mirage.config_loader.config_manager import ConfigManager
+from mirage.config.config_manager import ConfigManager
 
 
 class Binance(Broker):

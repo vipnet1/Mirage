@@ -2,7 +2,7 @@ import consts
 from mirage.channels.channels_manager import ChannelsManager
 from mirage.channels.telegram.telegram_channel import TelegramChannel
 from mirage.channels.trading_view.trading_view_channel import TradingViewChannel
-from mirage.config_loader.config_manager import ConfigManager
+from mirage.config.config_manager import ConfigManager
 from mirage.history.history_db_config import HistoryDbConfig
 
 

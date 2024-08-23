@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 import consts
-from mirage.config_loader.config import Config
+from mirage.config.config import Config
 
 
 class ConfigLoadException(Exception):

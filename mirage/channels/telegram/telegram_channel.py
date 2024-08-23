@@ -1,7 +1,7 @@
 from telegram.ext import ApplicationBuilder, CommandHandler
 from mirage.channels.communication_channel import CommunicationChannel
 from mirage.channels.telegram import commands
-from mirage.config_loader.config_manager import ConfigManager
+from mirage.config.config_manager import ConfigManager
 
 
 class TelegramChannel(CommunicationChannel):

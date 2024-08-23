@@ -2,8 +2,8 @@ from mirage.brokers.binance.binance import Binance
 from mirage.strategy.strategy import Strategy
 
 
-class BuyBtc(Strategy):
-    description = 'Buy 0.0001 BTC. Binance spot account.'
+class CryptoPairTrading(Strategy):
+    description = 'Go long & short on crypto pairs. Binance margin account.'
 
     async def execute(self):
         broker = Binance()

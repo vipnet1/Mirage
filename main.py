@@ -1,5 +1,6 @@
 import asyncio
 from pathlib import Path
+import platform
 import signal
 import logging
 from mirage.mirage_nexus import MirageNexus
@@ -9,6 +10,12 @@ import consts
 shutdown_flag = False
 
 
+def os_config():
+    if platform.system() == consts.PLATFORM_NAME_WINDOWS:
+        # Faild without it running ccxt asynchronically
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+
 def create_folders():
     Path(consts.CONFIG_FOLDER).mkdir(parents=True, exist_ok=True)
     Path(consts.LOG_FOLDER).mkdir(parents=True, exist_ok=True)
@@ -16,6 +23,7 @@ def create_folders():
 
 
 def bootstrap():
+    os_config()
     create_folders()
     configure_logger()
 

@@ -1,8 +1,6 @@
 import ccxt.async_support as ccxt
 from mirage.brokers.broker import Broker
 from mirage.config.config_manager import ConfigManager
-from mirage.history.common_operations import insert_records
-from mirage.history.models.binance_order import BinanceOrder
 
 
 class Binance(Broker):
@@ -17,5 +15,4 @@ class Binance(Broker):
 
     async def spot_place_market_order(self, symbol: str, amount: float):
         async with self._exchange:
-            order = await self._exchange.create_market_buy_order(symbol, amount)
-            insert_records([BinanceOrder(order)])
+            return await self._exchange.create_market_buy_order(symbol, amount)

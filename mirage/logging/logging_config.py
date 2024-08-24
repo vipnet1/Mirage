@@ -9,7 +9,7 @@ def configure_logger():
     root_logger = logging.getLogger()
     root_logger.setLevel(consts.LOGGING_LEVEL)
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', '%Y-%m-%d %H:%M:%S%z')
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)

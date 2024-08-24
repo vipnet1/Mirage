@@ -10,7 +10,7 @@ class ChannelsManagerException(Exception):
 
 class ChannelsManager:
     """
-    As some channels my depend on others, they are started in addition order, and closed in reverse order.
+    As some channels may depend on others, they are started in addition order, and closed in reverse order.
     """
 
     channels: Dict[str, Channel] = {}
@@ -48,7 +48,6 @@ class ChannelsManager:
         while ChannelsManager.channels_addition_order:
             channel_name = ChannelsManager.channels_addition_order.pop()
             await ChannelsManager.channels[channel_name].stop()
-            ChannelsManager.channels_addition_order.pop()
 
         ChannelsManager.channels = {}
         ChannelsManager.communication_channels = {}

@@ -12,6 +12,7 @@ LOG_FOLDER = '.logs'
 HISTORY_DB_NAME = 'history'
 RECORD_KEY_MIRAGE_CREATED_AT = 'mirage_created_at'
 COLLECTION_REQUEST_DATA = 'request_data'
+COLLECTION_BROKER_RESPONSE = 'broker_response'
 
 STRATEGY_MODULE_PREFIX = 'mirage.strategy'
 

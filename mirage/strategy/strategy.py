@@ -13,5 +13,5 @@ class Strategy:
         self._strategy_data = MirageDict(strategy_data)
 
     @abstractmethod
-    async def execute(self):
+    async def execute(self, request_data_id: str):
         raise NotImplementedError()

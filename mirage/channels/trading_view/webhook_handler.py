@@ -22,7 +22,7 @@ class WebhookHandler:
     async def process_request(self):
         logging.info('Received webhook data: %s', self._request_json)
 
-        insert_record(
+        result = insert_record(
             consts.COLLECTION_REQUEST_DATA,
             {
                 'source': 'trading_view',
@@ -37,7 +37,7 @@ class WebhookHandler:
 
         strategy: Strategy = self._get_strategy()
         self._validate_strategy_matching_description(strategy)
-        await strategy.execute()
+        await strategy.execute(result.inserted_id)
 
     def _get_strategy(self):
         try:

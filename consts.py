@@ -8,9 +8,10 @@ CONFIG_FILENAME = 'config.json'
 
 CONFIG_FOLDER = '.config'
 LOG_FOLDER = '.logs'
-DATABASES_FOLDER = '.databases'
 
-HISTORY_DB_NAME = 'history.db'
+HISTORY_DB_NAME = 'history'
+RECORD_KEY_MIRAGE_CREATED_AT = 'mirage_created_at'
+COLLECTION_REQUEST_DATA = 'request_data'
 
 STRATEGY_MODULE_PREFIX = 'mirage.strategy'
 

@@ -1,3 +1,8 @@
 [MASTER]
-disable=missing-module-docstring, missing-class-docstring, missing-function-docstring, unspecified-encoding, abstract-class-instantiated
+disable=missing-module-docstring,
+        missing-class-docstring,
+        missing-function-docstring,
+        unspecified-encoding,
+        abstract-class-instantiated,
+        unsubscriptable-object
 max-line-length=150

@@ -9,8 +9,8 @@ class TelegramChannel(CommunicationChannel):
     KEY_CHAT_ID = 'channels.telegram.chat_id'
 
     def __init__(self):
-        self._application = ApplicationBuilder().token(ConfigManager.config.get(self.KEY_TOKEN)).build()
-        self._chat_id = ConfigManager.config.get(self.KEY_CHAT_ID)
+        self._application = ApplicationBuilder().token(ConfigManager.config.get(TelegramChannel.KEY_TOKEN)).build()
+        self._chat_id = ConfigManager.config.get(TelegramChannel.KEY_CHAT_ID)
 
     async def start(self):
         self._application.add_handlers([

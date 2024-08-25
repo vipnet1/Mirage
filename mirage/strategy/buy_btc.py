@@ -1,7 +1,7 @@
 import logging
 import consts
 from mirage.brokers.binance.binance import Binance
-from mirage.history.common_operations import insert_record
+from mirage.history.common_operations import insert_history_record
 from mirage.strategy.strategy import Strategy
 
 
@@ -17,7 +17,7 @@ class BuyBtc(Strategy):
         async with binance.exchange:
             order = await binance.exchange.create_market_buy_order_with_cost('BTC/USDT', 8)
 
-        insert_record(
+        insert_history_record(
             consts.COLLECTION_BROKER_RESPONSE,
             {
                 'request_data_id': request_data_id,

@@ -8,6 +8,6 @@ class Binance:
 
     def __init__(self):
         self.exchange = ccxt.binance({
-            'apiKey': ConfigManager.config.get(self.KEY_API_KEY),
-            'secret': ConfigManager.config.get(self.KEY_SECRET_KEY),
+            'apiKey': ConfigManager.config.get(Binance.KEY_API_KEY),
+            'secret': ConfigManager.config.get(Binance.KEY_SECRET_KEY),
         })

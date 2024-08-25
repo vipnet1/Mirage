@@ -14,8 +14,10 @@ COLLECTION_REQUEST_DATA = 'request_data'
 COLLECTION_BROKER_RESPONSE = 'broker_response'
 
 DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING = 'strategy_crypto_pair_trading'
+COLLECTION_POSITION_INFO = 'position_info'
 
 RECORD_KEY_CREATED_AT = 'created_at'
+RECORD_KEY_UPDATED_AT = 'updated_at'
 
 STRATEGY_MODULE_PREFIX = 'mirage.strategy'
 

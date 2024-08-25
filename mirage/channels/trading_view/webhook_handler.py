@@ -20,7 +20,7 @@ class WebhookHandler:
         self._request_json = RequestJson(request_data)
 
     async def process_request(self):
-        logging.info('Received webhook data: %s', self._request_json)
+        logging.info('Received webhook data: %s', self._request_json.raw_dict)
 
         result = insert_record(
             consts.COLLECTION_REQUEST_DATA,

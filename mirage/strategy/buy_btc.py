@@ -9,6 +9,8 @@ class BuyBtc(Strategy):
     description = 'Buy 8$ worth of BTC. Binance spot account.'
 
     async def execute(self, request_data_id: str):
+        await super().execute(request_data_id)
+
         logging.info('Placing buy order on binance')
 
         binance = Binance()

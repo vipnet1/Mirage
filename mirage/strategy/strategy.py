@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+import logging
 from typing import Any, Dict
 
 from mirage.utils.mirage_dict import MirageDict
@@ -14,4 +15,4 @@ class Strategy:
 
     @abstractmethod
     async def execute(self, request_data_id: str):
-        raise NotImplementedError()
+        logging.info('Executing %s strategy', self.__class__.__name__)

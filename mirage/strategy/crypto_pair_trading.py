@@ -1,10 +1,12 @@
-# from mirage.brokers.binance.binance import Binance
-# from mirage.strategy.strategy import Strategy
+import logging
+import consts
+from mirage.brokers.binance.binance import Binance
+from mirage.history.common_operations import insert_record
+from mirage.strategy.strategy import Strategy
 
 
-# class CryptoPairTrading(Strategy):
-#     description = 'Go long & short on crypto pairs. Binance margin account.'
+class CryptoPairTrading(Strategy):
+    description = 'Go long & short on pairs. Binance margin account.'
 
-#     async def execute(self):
-#         broker = Binance()
-#         await broker.spot_place_market_order('BTC/USDT', 0.0001)
+    async def execute(self, request_data_id: str):
+        await super().execute(request_data_id)

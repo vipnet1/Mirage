@@ -9,10 +9,13 @@ CONFIG_FILENAME = 'config.json'
 CONFIG_FOLDER = '.config'
 LOG_FOLDER = '.logs'
 
-HISTORY_DB_NAME = 'history'
-RECORD_KEY_MIRAGE_CREATED_AT = 'mirage_created_at'
+DB_NAME_HISTORY = 'history'
 COLLECTION_REQUEST_DATA = 'request_data'
 COLLECTION_BROKER_RESPONSE = 'broker_response'
+
+DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING = 'strategy_crypto_pair_trading'
+
+RECORD_KEY_CREATED_AT = 'created_at'
 
 STRATEGY_MODULE_PREFIX = 'mirage.strategy'
 

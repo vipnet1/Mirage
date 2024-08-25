@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
+import time
 import consts
 
 
@@ -9,7 +10,8 @@ def configure_logger():
     root_logger = logging.getLogger()
     root_logger.setLevel(consts.LOGGING_LEVEL)
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', '%Y-%m-%d %H:%M:%S%z')
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter.converter = time.gmtime
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)

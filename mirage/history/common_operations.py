@@ -1,26 +1,42 @@
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict
 from pymongo.results import InsertOneResult
 import consts
 from mirage.history.history_db_config import HistoryDbConfig
+from mirage.utils.dict_utils import clean_dict, dataclass_to_dict
 
 
-def insert_history_record(collection_name: str, record: Dict[str, Any]) -> InsertOneResult:
-    return insert_record(consts.DB_NAME_HISTORY, collection_name, record)
+def insert_dataclass(db_name: str, collection_name: str, data: dataclass) -> InsertOneResult:
+    return _insert_record(db_name, collection_name, dataclass_to_dict(data))
 
 
-def insert_record(db_name: str, collection_name: str, record: Dict[str, Any]) -> InsertOneResult:
+def insert_dict(db_name: str, collection_name: str, record: Dict[str, Any]) -> InsertOneResult:
+    return _insert_record(db_name, collection_name, clean_dict(record))
+
+
+def _insert_record(db_name: str, collection_name: str, clean_record: Dict[str, Any]) -> InsertOneResult:
     collection = HistoryDbConfig.client[db_name][collection_name]
-    record[consts.RECORD_KEY_CREATED_AT] = datetime.now(timezone.utc)
-    record[consts.RECORD_KEY_UPDATED_AT] = record[consts.RECORD_KEY_CREATED_AT]
-    return collection.insert_one(record)
+
+    clean_record[consts.RECORD_KEY_CREATED_AT] = datetime.now(timezone.utc)
+    clean_record[consts.RECORD_KEY_UPDATED_AT] = clean_record[consts.RECORD_KEY_CREATED_AT]
+    return collection.insert_one(clean_record)
 
 
-def update_record(db_name: str, collection_name: str, query: Dict[str, Any], update: Dict[str, Any]):
+def update_dataclass(db_name: str, collection_name: str, query_data: dataclass, update_data: dataclass):
+    _update_record(db_name, collection_name, dataclass_to_dict(query_data), dataclass_to_dict(update_data))
+
+
+def update_dict(db_name: str, collection_name: str, query: Dict[str, Any], update: Dict[str, Any]):
+    _update_record(db_name, collection_name, clean_dict(query), clean_dict(update))
+
+
+def _update_record(db_name: str, collection_name: str, clean_query: Dict[str, Any], clean_update: Dict[str, Any]):
     collection = HistoryDbConfig.client[db_name][collection_name]
-    return collection.update_one(query, {
+
+    return collection.update_one(clean_query, {
         '$set': {
             consts.RECORD_KEY_UPDATED_AT: datetime.now(timezone.utc),
-            **update
+            **clean_update
         }
     })

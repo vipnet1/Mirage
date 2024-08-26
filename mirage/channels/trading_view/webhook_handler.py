@@ -5,7 +5,7 @@ import consts
 
 from mirage.channels.trading_view.exceptions import WebhookRequestException
 from mirage.channels.trading_view.request_json import RequestJson
-from mirage.history.common_operations import insert_history_record
+from mirage.history.common_operations import insert_dict
 from mirage.utils.mirage_imports import MirageImportsException, import_object
 from mirage.strategy.strategy import Strategy
 
@@ -22,11 +22,12 @@ class WebhookHandler:
     async def process_request(self):
         logging.info('Received webhook data: %s', self._request_json.raw_dict)
 
-        result = insert_history_record(
+        result = insert_dict(
+            consts.DB_NAME_HISTORY,
             consts.COLLECTION_REQUEST_DATA,
             {
                 'source': 'trading_view',
-                'content': {**self._request_json.raw_dict}
+                'content': self._request_json.raw_dict
             }
         )
 

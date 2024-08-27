@@ -27,4 +27,5 @@ class TelegramChannel(CommunicationChannel):
         await self._application.shutdown()
 
     async def send_message(self, message: str):
-        await self._application.bot.send_message(chat_id=self._chat_id, text=message)
+        pass
+        # await self._application.bot.send_message(chat_id=self._chat_id, text=message)

@@ -1,0 +1,3 @@
+
+class MirageAlgorithm:
+    pass

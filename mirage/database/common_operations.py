@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict
 from pymongo.results import InsertOneResult
 import consts
-from mirage.history.history_db_config import HistoryDbConfig
+from mirage.database.db_config import DbConfig
 from mirage.utils.dict_utils import clean_dict, dataclass_to_dict
 
 
@@ -16,7 +16,7 @@ def insert_dict(db_name: str, collection_name: str, record: Dict[str, Any]) -> I
 
 
 def _insert_record(db_name: str, collection_name: str, clean_record: Dict[str, Any]) -> InsertOneResult:
-    collection = HistoryDbConfig.client[db_name][collection_name]
+    collection = DbConfig.client[db_name][collection_name]
 
     clean_record[consts.RECORD_KEY_CREATED_AT] = datetime.now(timezone.utc)
     clean_record[consts.RECORD_KEY_UPDATED_AT] = clean_record[consts.RECORD_KEY_CREATED_AT]
@@ -32,7 +32,7 @@ def update_dict(db_name: str, collection_name: str, query: Dict[str, Any], updat
 
 
 def _update_record(db_name: str, collection_name: str, clean_query: Dict[str, Any], clean_update: Dict[str, Any]):
-    collection = HistoryDbConfig.client[db_name][collection_name]
+    collection = DbConfig.client[db_name][collection_name]
 
     return collection.update_one(clean_query, {
         '$set': {

@@ -3,14 +3,14 @@ from mirage.channels.channels_manager import ChannelsManager
 from mirage.channels.telegram.telegram_channel import TelegramChannel
 from mirage.channels.trading_view.trading_view_channel import TradingViewChannel
 from mirage.config.config_manager import ConfigManager
-from mirage.history.history_db_config import HistoryDbConfig
+from mirage.database.db_config import DbConfig
 
 
 class MirageNexus:
     async def bootstrap(self):
         ConfigManager.load_config()
 
-        HistoryDbConfig.init_db_connection()
+        DbConfig.init_db_connection()
 
         ChannelsManager.add_channel(consts.CHANNEL_TELEGRAM, TelegramChannel())
         ChannelsManager.add_channel(consts.CHANNEL_TRADING_VIEW, TradingViewChannel())
@@ -18,4 +18,4 @@ class MirageNexus:
 
     async def shutdown(self):
         await ChannelsManager.stop_all_channels()
-        HistoryDbConfig.close_db_connection()
+        DbConfig.close_db_connection()

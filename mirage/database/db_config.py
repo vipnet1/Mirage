@@ -3,17 +3,17 @@ import pymongo.database
 from mirage.config.config_manager import ConfigManager
 
 
-class HistoryDbConfig:
+class DbConfig:
     KEY_CONNECTION_STRING = 'database_connection_string'
 
     client: pymongo.MongoClient = None
 
     @staticmethod
     def init_db_connection():
-        HistoryDbConfig.client = pymongo.MongoClient(
-            ConfigManager.config.get(HistoryDbConfig.KEY_CONNECTION_STRING)
+        DbConfig.client = pymongo.MongoClient(
+            ConfigManager.config.get(DbConfig.KEY_CONNECTION_STRING)
         )
 
     @staticmethod
     def close_db_connection():
-        HistoryDbConfig.client.close()
+        DbConfig.client.close()

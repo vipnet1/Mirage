@@ -1,7 +1,7 @@
 import logging
 import consts
 from mirage.brokers.binance.binance import Binance
-from mirage.history.common_operations import insert_dict
+from mirage.database.common_operations import insert_dict
 from mirage.strategy.strategy import Strategy
 
 

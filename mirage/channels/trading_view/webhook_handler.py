@@ -5,7 +5,7 @@ import consts
 
 from mirage.channels.trading_view.exceptions import WebhookRequestException
 from mirage.channels.trading_view.request_json import RequestJson
-from mirage.history.common_operations import insert_dict
+from mirage.database.common_operations import insert_dict
 from mirage.utils.mirage_imports import MirageImportsException, import_object
 from mirage.strategy.strategy import Strategy
 
@@ -42,8 +42,9 @@ class WebhookHandler:
 
     def _get_strategy(self):
         try:
+            strategy_name = self._request_json.get(WebhookHandler.KEY_STRATEGY_NAME)
             strategy_class = import_object(
-                f'{consts.STRATEGY_MODULE_PREFIX}.{self._request_json.get(WebhookHandler.KEY_STRATEGY_NAME)}',
+                f'{consts.STRATEGY_MODULE_PREFIX}.{strategy_name}.{strategy_name}',
                 self._convert_strategy_filename_to_class()
             )
             return strategy_class(self._request_json.get(WebhookHandler.KEY_DATA))

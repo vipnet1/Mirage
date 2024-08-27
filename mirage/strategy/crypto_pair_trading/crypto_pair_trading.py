@@ -49,7 +49,7 @@ class CryptoPairTrading(Strategy):
     KEY_MAX_LOSS_PERCENT = 'strategies.crypto_pair_trading.max_loss_percent'
 
     DATA_PAIR = 'pair'
-    DATA_ACTION = 'entry'
+    DATA_ACTION = 'action'
     DATA_SIDE = 'side'
     DATA_STOPLOSS_DISTANCE = 'stoploss_distance'
 
@@ -71,12 +71,14 @@ class CryptoPairTrading(Strategy):
         if action == CryptoPairTrading.ACTION_ENTRY:
             if existing_position:
                 logging.warning("Can't enter new position: another one exists with the chart pair %s", pair_raw)
+                return
 
             await self._enter_new_position(pair_info)
 
         elif action == CryptoPairTrading.ACTION_EXIT:
             if not existing_position:
                 logging.warning("Can't exit position as not in active trade with chart pair %s", pair_raw)
+                return
 
             await self._exit_current_position(pair_info, existing_position)
 
@@ -257,7 +259,6 @@ class CryptoPairTrading(Strategy):
                     'content': borrow_order,
                 }
             )
-            print('yey')
 
     def _get_recent_position_info_from_db(self):
         pair_raw = self._strategy_data.get(CryptoPairTrading.DATA_PAIR)

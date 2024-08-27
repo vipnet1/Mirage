@@ -1,0 +1,3 @@
+
+class MirageJob:
+    pass

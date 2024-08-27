@@ -39,10 +39,7 @@ class MarketAlgorithm(MirageAlgorithm):
         else:
             raise UnknownCommandException(f'Unknown {self.__class__.__name__} command')
 
-        self._command_results.append({
-            'description': command.description,
-            'content': order
-        })
+        self._command_results.append(order)
 
     async def _process_command_amount(self, command: CommandAmount):
         if command.operation == MarketAlgorithm.OPERATION_BUY:

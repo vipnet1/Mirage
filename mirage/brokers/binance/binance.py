@@ -3,6 +3,8 @@ from mirage.config.config_manager import ConfigManager
 
 
 class Binance:
+    BINANCE = 'binance'
+
     KEY_API_KEY = 'brokers.binance.api_key'
     KEY_SECRET_KEY = 'brokers.binance.secret_key'
 

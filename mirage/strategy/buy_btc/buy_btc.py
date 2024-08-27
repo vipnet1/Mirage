@@ -1,7 +1,4 @@
-import logging
-import consts
-from mirage.brokers.binance.binance import Binance
-from mirage.database.common_operations import insert_dict
+from mirage.algorithm.market.market_algorithm import CommandCost, MarketAlgorithm
 from mirage.strategy.strategy import Strategy
 
 
@@ -11,20 +8,14 @@ class BuyBtc(Strategy):
     async def execute(self, request_data_id: str):
         await super().execute(request_data_id)
 
-        logging.info('Placing buy order on binance')
-
-        binance = Binance()
-        async with binance.exchange:
-            order = await binance.exchange.create_market_buy_order_with_cost('BTC/USDT', 8)
-
-        insert_dict(
-            consts.DB_NAME_HISTORY,
-            consts.COLLECTION_BROKER_RESPONSE,
-            {
-                'request_data_id': request_data_id,
-                'broker': 'binance',
-                'description': 'Bought 8$ worth of BTC using USDT',
-                'content': order
-            }
-        )
-        logging.info(order)
+        await MarketAlgorithm(
+            self._request_data_id,
+            [
+                CommandCost(
+                    description='Buy 8$ worth of BTC using USDT',
+                    symbol='BTC/USDT',
+                    operation=MarketAlgorithm.OPERATION_BUY,
+                    cost=8
+                )
+            ]
+        ).execute()

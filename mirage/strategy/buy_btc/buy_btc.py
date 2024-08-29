@@ -1,4 +1,4 @@
-from mirage.algorithm.market.market_algorithm import CommandCost, MarketAlgorithm
+from mirage.algorithm.simple_order.simple_order_algorithm import CommandCost, SimpleOrderAlgorithm
 from mirage.strategy.strategy import Strategy
 
 
@@ -8,14 +8,26 @@ class BuyBtc(Strategy):
     async def execute(self, request_data_id: str):
         await super().execute(request_data_id)
 
-        await MarketAlgorithm(
+        await SimpleOrderAlgorithm(
             self._request_data_id,
             [
+                # CommandCost(
+                #     description='Buy 8$ worth of BTC using USDT',
+                #     wallet=SimpleOrderAlgorithm.WALLET_SPOT,
+                #     type=SimpleOrderAlgorithm.TYPE_MARKET,
+                #     symbol='BTC/USDT',
+                #     operation=SimpleOrderAlgorithm.OPERATION_BUY,
+                #     cost=8,
+                #     price=None
+                # ),
                 CommandCost(
                     description='Buy 8$ worth of BTC using USDT',
+                    wallet=SimpleOrderAlgorithm.WALLET_SPOT,
+                    type=SimpleOrderAlgorithm.TYPE_LIMIT,
                     symbol='BTC/USDT',
-                    operation=MarketAlgorithm.OPERATION_BUY,
-                    cost=8
+                    operation=SimpleOrderAlgorithm.OPERATION_BUY,
+                    cost=8,
+                    price=61000
                 )
             ]
         ).execute()

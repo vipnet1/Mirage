@@ -9,7 +9,7 @@ from mirage.database.common_operations import insert_dict
 from mirage.utils.dict_utils import dataclass_to_dict
 
 
-class UnknownCommandException(Exception):
+class MirageAlgorithmException(Exception):
     pass
 
 

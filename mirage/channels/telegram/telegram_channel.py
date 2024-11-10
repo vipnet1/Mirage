@@ -1,7 +1,39 @@
-from telegram.ext import ApplicationBuilder, CommandHandler
+import logging
+import traceback
+from telegram import Update
+from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes
+from mirage.channels.channels_manager import ChannelsManager
 from mirage.channels.communication_channel import CommunicationChannel
-from mirage.channels.telegram import commands
+from mirage.channels.telegram.commands.show_config import ShowConfigCommand
+from mirage.channels.telegram.telegram_command import TelegramCommand
 from mirage.config.config_manager import ConfigManager
+
+
+class InvalidTelegramCommandException(Exception):
+    pass
+
+
+async def handle_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    try:
+        text = update.message.text
+        command = text.splitlines()[0]
+
+        available_commands = [ShowConfigCommand.COMMAND_NAME]
+        if command not in available_commands:
+            raise InvalidTelegramCommandException(f'Invalid telegram command: {command}')
+
+        command_object: TelegramCommand = None
+        if command == ShowConfigCommand.COMMAND_NAME:
+            command_object = ShowConfigCommand(update, context)
+
+        await command_object.execute()
+
+    except InvalidTelegramCommandException:
+        await ChannelsManager.get_communication_channel().send_message(f'Available commands:\n {available_commands}')
+
+    except Exception as exc:
+        logging.exception(exc)
+        await ChannelsManager.get_communication_channel().send_message(f'Exception processing telegram command:\n {traceback.format_exc()}')
 
 
 class TelegramChannel(CommunicationChannel):
@@ -13,9 +45,7 @@ class TelegramChannel(CommunicationChannel):
         self._chat_id = ConfigManager.config.get(TelegramChannel.KEY_CHAT_ID)
 
     async def start(self):
-        self._application.add_handlers([
-            CommandHandler("start", commands.handle_start),
-        ])
+        self._application.add_handlers([MessageHandler(filters=None, callback=handle_command)])
 
         await self._application.initialize()
         await self._application.start()
@@ -27,5 +57,4 @@ class TelegramChannel(CommunicationChannel):
         await self._application.shutdown()
 
     async def send_message(self, message: str):
-        pass
-        # await self._application.bot.send_message(chat_id=self._chat_id, text=message)
+        await self._application.bot.send_message(chat_id=self._chat_id, text=message)

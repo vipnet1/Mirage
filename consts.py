@@ -9,6 +9,8 @@ CONFIG_FILENAME = 'config.json'
 CONFIG_FOLDER = '.config'
 LOG_FOLDER = '.logs'
 
+NON_SENSITIVE_CONFIG_KEYS = ['strategies']
+
 DB_NAME_HISTORY = 'history'
 COLLECTION_REQUEST_DATA = 'request_data'
 COLLECTION_BROKER_RESPONSE = 'broker_response'

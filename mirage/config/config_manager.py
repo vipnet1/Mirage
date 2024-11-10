@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import consts
 from mirage.config.config import Config
+from mirage.utils.mirage_dict import MirageDict
 
 
 class ConfigLoadException(Exception):
@@ -18,6 +19,10 @@ class ConfigManager:
 
         except Exception as e:
             raise ConfigLoadException('Failed to load config file.') from e
+
+    @staticmethod
+    def get_non_sensitive_config() -> MirageDict:
+        return MirageDict({key: ConfigManager.config.get(key) for key in consts.NON_SENSITIVE_CONFIG_KEYS})
 
     @staticmethod
     def _load_config_file() -> Config:

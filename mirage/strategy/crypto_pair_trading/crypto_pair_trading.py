@@ -6,12 +6,14 @@ from typing import Optional, Tuple
 from bson import ObjectId
 import pymongo
 import consts
-from mirage.brokers.binance.binance import Binance
+from mirage.algorithm.borrow import borrow_algorithm
+from mirage.algorithm.simple_order import simple_order_algorithm
 from mirage.config.config_manager import ConfigManager
-from mirage.database.common_operations import insert_dataclass, insert_dict, update_dataclass
+from mirage.database.common_operations import insert_dataclass, update_dataclass
 from mirage.database.db_config import DbConfig
 from mirage.strategy.strategy import Strategy
 from mirage.utils.dict_utils import dataclass_to_dict
+from mirage.utils.symbol_utils import get_base_symbol
 
 
 class CryptoPairTradingException(Exception):
@@ -21,7 +23,7 @@ class CryptoPairTradingException(Exception):
 @dataclass
 class PairInfo:
     first_pair: str
-    second_pair: int
+    second_pair: str
     ratio: float
 
 
@@ -105,7 +107,7 @@ class CryptoPairTrading(Strategy):
         if side == CryptoPairTrading.SIDE_LONG:
             await self._binance_enter_new_position(pair_info.first_pair, coin1_amount, pair_info.second_pair, coin2_amount)
         elif side == CryptoPairTrading.SIDE_SHORT:
-            await self._binance_enter_new_position(pair_info.first_pair, coin1_amount, pair_info.second_pair, coin2_amount)
+            await self._binance_enter_new_position(pair_info.second_pair, coin2_amount, pair_info.first_pair, coin1_amount)
         else:
             raise CryptoPairTradingException(f'Invalid side received {side} with chart pair {pair_raw}')
 
@@ -124,63 +126,44 @@ class CryptoPairTrading(Strategy):
         )
 
     async def _binance_enter_new_position(self, long_pair: str, long_amount: float, short_pair: str, short_amount: float):
-        binance = Binance()
-        async with binance.exchange:
-            logging.info('Borrowing coin on binance')
-            shorted_coin = short_pair.split('/')[0]
-            borrow_order = await binance.exchange.borrow_cross_margin(shorted_coin, short_amount)
-            insert_dict(
-                consts.DB_NAME_HISTORY,
-                consts.COLLECTION_BROKER_RESPONSE,
-                {
-                    'request_data_id': self._request_data_id,
-                    'broker': 'binance',
-                    'description': 'Borrowed coin to short',
-                    'content': borrow_order,
-                }
-            )
+        await borrow_algorithm.BorrowAlgorithm(
+            self._request_data_id,
+            [
+                borrow_algorithm.Command(
+                    strategy=self.__class__.__name__,
+                    description='Pair trading borrow short coin',
+                    operation=borrow_algorithm.BorrowAlgorithm.OPERATION_BORROW,
+                    symbol=get_base_symbol(short_pair),
+                    amount=short_amount
+                )
+            ]
+        ).execute()
 
-            logging.info('Going long on binance')
-            long_order = await binance.exchange.create_order(
-                symbol=long_pair,
-                type='market',
-                side='buy',
-                amount=long_amount,
-                params={
-                    'type': 'margin'
-                }
-            )
-            insert_dict(
-                consts.DB_NAME_HISTORY,
-                consts.COLLECTION_BROKER_RESPONSE,
-                {
-                    'request_data_id': self._request_data_id,
-                    'broker': 'binance',
-                    'description': 'Went long in some pair',
-                    'content': long_order
-                }
-            )
-
-            logging.info('Going short on binance')
-            short_order = await binance.exchange.create_order(
-                symbol=short_pair,
-                type='market',
-                side='sell',
-                amount=short_amount,
-                params={
-                    'type': 'margin'
-                }
-            )
-            insert_dict(
-                consts.DB_NAME_HISTORY,
-                consts.COLLECTION_BROKER_RESPONSE,
-                {
-                    'request_data_id': self._request_data_id,
-                    'broker': 'binance',
-                    'description': 'Went long in some pair',
-                    'content': short_order
-                }
-            )
+        await simple_order_algorithm.SimpleOrderAlgorithm(
+            self._request_data_id,
+            [
+                simple_order_algorithm.CommandAmount(
+                    strategy=self.__class__.__name__,
+                    description='Pair trading long coin',
+                    wallet=simple_order_algorithm.SimpleOrderAlgorithm.WALLET_MARGIN,
+                    type=simple_order_algorithm.SimpleOrderAlgorithm.TYPE_MARKET,
+                    symbol=long_pair,
+                    operation=simple_order_algorithm.SimpleOrderAlgorithm.OPERATION_BUY,
+                    amount=long_amount,
+                    price=None
+                ),
+                simple_order_algorithm.CommandAmount(
+                    strategy=self.__class__.__name__,
+                    description='Pair trading short coin',
+                    wallet=simple_order_algorithm.SimpleOrderAlgorithm.WALLET_MARGIN,
+                    type=simple_order_algorithm.SimpleOrderAlgorithm.TYPE_MARKET,
+                    symbol=short_pair,
+                    operation=simple_order_algorithm.SimpleOrderAlgorithm.OPERATION_SELL,
+                    amount=short_amount,
+                    price=None
+                )
+            ]
+        ).execute()
 
     async def _exit_current_position(self, pair_info: PairInfo, position_info: PositionInfo):
         if position_info.side == CryptoPairTrading.SIDE_LONG:
@@ -202,63 +185,44 @@ class CryptoPairTrading(Strategy):
         )
 
     async def _binance_exit_current_position(self, long_pair: str, long_amount: float, short_pair: str, short_amount: float):
-        binance = Binance()
-        async with binance.exchange:
-            logging.info('Selling long coins')
-            sell_order = await binance.exchange.create_order(
-                symbol=long_pair,
-                type='market',
-                side='sell',
-                amount=long_amount,
-                params={
-                    'type': 'margin'
-                }
-            )
-            insert_dict(
-                consts.DB_NAME_HISTORY,
-                consts.COLLECTION_BROKER_RESPONSE,
-                {
-                    'request_data_id': self._request_data_id,
-                    'broker': 'binance',
-                    'description': 'Sold before longed coins',
-                    'content': sell_order
-                }
-            )
+        await simple_order_algorithm.SimpleOrderAlgorithm(
+            self._request_data_id,
+            [
+                simple_order_algorithm.CommandAmount(
+                    strategy=self.__class__.__name__,
+                    description='Pair trading sell longed coin',
+                    wallet=simple_order_algorithm.SimpleOrderAlgorithm.WALLET_MARGIN,
+                    type=simple_order_algorithm.SimpleOrderAlgorithm.TYPE_MARKET,
+                    symbol=long_pair,
+                    operation=simple_order_algorithm.SimpleOrderAlgorithm.OPERATION_SELL,
+                    amount=long_amount,
+                    price=None
+                ),
+                simple_order_algorithm.CommandAmount(
+                    strategy=self.__class__.__name__,
+                    description='Pair trading buy shorted coin',
+                    wallet=simple_order_algorithm.SimpleOrderAlgorithm.WALLET_MARGIN,
+                    type=simple_order_algorithm.SimpleOrderAlgorithm.TYPE_MARKET,
+                    symbol=short_pair,
+                    operation=simple_order_algorithm.SimpleOrderAlgorithm.OPERATION_BUY,
+                    amount=short_amount,
+                    price=None
+                )
+            ]
+        ).execute()
 
-            logging.info('Buying shorted coins')
-            buy_order = await binance.exchange.create_order(
-                symbol=short_pair,
-                type='market',
-                side='buy',
-                amount=short_amount,
-                params={
-                    'type': 'margin'
-                }
-            )
-            insert_dict(
-                consts.DB_NAME_HISTORY,
-                consts.COLLECTION_BROKER_RESPONSE,
-                {
-                    'request_data_id': self._request_data_id,
-                    'broker': 'binance',
-                    'description': 'Bought before shorted coins',
-                    'content': buy_order
-                }
-            )
-
-            logging.info('Repaying previously borrowed coin on binance')
-            shorted_coin = short_pair.split('/')[0]
-            borrow_order = await binance.exchange.repay_cross_margin(shorted_coin, short_amount)
-            insert_dict(
-                consts.DB_NAME_HISTORY,
-                consts.COLLECTION_BROKER_RESPONSE,
-                {
-                    'request_data_id': self._request_data_id,
-                    'broker': 'binance',
-                    'description': 'Repayed previously borrowed coins to short',
-                    'content': borrow_order,
-                }
-            )
+        await borrow_algorithm.BorrowAlgorithm(
+            self._request_data_id,
+            [
+                borrow_algorithm.Command(
+                    strategy=self.__class__.__name__,
+                    description='Pair trading repay borrowed short coin',
+                    operation=borrow_algorithm.BorrowAlgorithm.OPERATION_REPAY,
+                    symbol=get_base_symbol(short_pair),
+                    amount=short_amount
+                )
+            ]
+        ).execute()
 
     def _get_recent_position_info_from_db(self):
         pair_raw = self._strategy_data.get(CryptoPairTrading.DATA_PAIR)

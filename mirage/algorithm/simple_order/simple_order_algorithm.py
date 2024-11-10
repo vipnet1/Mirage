@@ -2,7 +2,8 @@
 from abc import ABCMeta
 from dataclasses import dataclass
 import logging
-from mirage.algorithm.mirage_algorithm import MirageAlgorithm, MirageAlgorithmException
+from typing import Optional
+from mirage.algorithm.mirage_algorithm import CommandBase, MirageAlgorithm, MirageAlgorithmException
 from mirage.brokers.binance.binance import Binance
 
 
@@ -11,7 +12,7 @@ class SimpleOrderAlgorithmException(MirageAlgorithmException):
 
 
 @dataclass
-class CommandBase:
+class Command(CommandBase):
     __metaclass__ = ABCMeta
 
     description: str
@@ -19,16 +20,16 @@ class CommandBase:
     type: str
     symbol: str
     operation: str
-    price: float
+    price: Optional[float]
 
 
 @dataclass
-class CommandAmount(CommandBase):
+class CommandAmount(Command):
     amount: int
 
 
 @dataclass
-class CommandCost(CommandBase):
+class CommandCost(Command):
     cost: int
 
 
@@ -69,6 +70,9 @@ class SimpleOrderAlgorithm(MirageAlgorithm):
         if command.type == SimpleOrderAlgorithm.TYPE_MARKET and command.price is not None:
             raise SimpleOrderAlgorithmException('You should not provide price for market order')
 
+        if command.type == SimpleOrderAlgorithm.TYPE_LIMIT and isinstance(command, CommandCost):
+            raise SimpleOrderAlgorithmException('No cost command for limit order type')
+
     async def _process_command_amount(self, command: CommandAmount):
         binance = Binance()
         async with binance.exchange:
@@ -87,7 +91,6 @@ class SimpleOrderAlgorithm(MirageAlgorithm):
     async def _process_command_cost(self, command: CommandCost):
         binance = Binance()
         async with binance.exchange:
-            binance.exchange.create_limit
             logging.info('Placing %s order on binance. Symbol %s, cost: %s', command.wallet, command.symbol, command.cost)
             return await binance.exchange.create_order(
                 symbol=command.symbol,

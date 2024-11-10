@@ -11,23 +11,15 @@ class BuyBtc(Strategy):
         await SimpleOrderAlgorithm(
             self._request_data_id,
             [
-                # CommandCost(
-                #     description='Buy 8$ worth of BTC using USDT',
-                #     wallet=SimpleOrderAlgorithm.WALLET_SPOT,
-                #     type=SimpleOrderAlgorithm.TYPE_MARKET,
-                #     symbol='BTC/USDT',
-                #     operation=SimpleOrderAlgorithm.OPERATION_BUY,
-                #     cost=8,
-                #     price=None
-                # ),
                 CommandCost(
+                    strategy=self.__class__.__name__,
                     description='Buy 8$ worth of BTC using USDT',
                     wallet=SimpleOrderAlgorithm.WALLET_SPOT,
-                    type=SimpleOrderAlgorithm.TYPE_LIMIT,
+                    type=SimpleOrderAlgorithm.TYPE_MARKET,
                     symbol='BTC/USDT',
                     operation=SimpleOrderAlgorithm.OPERATION_BUY,
                     cost=8,
-                    price=61000
+                    price=None
                 )
             ]
         ).execute()

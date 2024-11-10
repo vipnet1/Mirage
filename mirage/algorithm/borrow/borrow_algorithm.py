@@ -1,7 +1,7 @@
 
 from dataclasses import dataclass
 import logging
-from mirage.algorithm.mirage_algorithm import MirageAlgorithm
+from mirage.algorithm.mirage_algorithm import CommandBase, MirageAlgorithm
 from mirage.brokers.binance.binance import Binance
 
 
@@ -10,7 +10,7 @@ class BorrowAlgorithmException(Exception):
 
 
 @dataclass
-class Command:
+class Command(CommandBase):
     operation: str
     symbol: str
     amount: str

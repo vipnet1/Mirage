@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 import logging
-from typing import Any, Dict, List
+from typing import List
 
 import consts
 from mirage.brokers.binance.binance import Binance
@@ -13,12 +13,19 @@ class MirageAlgorithmException(Exception):
     pass
 
 
+@dataclass
+class CommandBase:
+    __metaclass__ = ABCMeta
+    strategy: str
+    description: str
+
+
 class MirageAlgorithm:
     __metaclass__ = ABCMeta
 
     description = ''
 
-    def __init__(self, request_data_id: str, commands: List[Dict[str, Any]]):
+    def __init__(self, request_data_id: str, commands: List[CommandBase]):
         self._request_data_id = request_data_id
         self._commands = commands
         self._command_results = []

@@ -1,5 +1,6 @@
 import logging
 import traceback
+from typing import Dict
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes
 from mirage.channels.channels_manager import ChannelsManager
@@ -16,31 +17,30 @@ class InvalidTelegramCommandException(MirageTelegramException):
     pass
 
 
-async def handle_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def _handle_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    available_commands = [ShowConfigCommand, UpdateConfigCommand, OverrideConfigCommand]
+    commands_name_to_class = {cmd.COMMAND_NAME: cmd for cmd in available_commands}
+
     try:
-        text = update.message.text
-        command = text.splitlines()[0]
-
-        available_commands = [ShowConfigCommand.COMMAND_NAME, UpdateConfigCommand.COMMAND_NAME, OverrideConfigCommand.COMMAND_NAME]
-        if command not in available_commands:
-            raise InvalidTelegramCommandException(f'Invalid telegram command: {command}')
-
-        command_object: TelegramCommand = None
-        if command == ShowConfigCommand.COMMAND_NAME:
-            command_object = ShowConfigCommand(update, context)
-        elif command == UpdateConfigCommand.COMMAND_NAME:
-            command_object = UpdateConfigCommand(update, context)
-        elif command == OverrideConfigCommand.COMMAND_NAME:
-            command_object = OverrideConfigCommand(update, context)
-
+        command_object = _get_command_class(update, commands_name_to_class)(update, context)
         await command_object.execute()
 
     except InvalidTelegramCommandException:
-        await ChannelsManager.get_communication_channel().send_message(f'Available commands:\n {available_commands}')
+        await ChannelsManager.get_communication_channel().send_message(f'Available commands:\n {list(commands_name_to_class.keys())}')
 
     except Exception as exc:
         logging.exception(exc)
         await ChannelsManager.get_communication_channel().send_message(f'Exception processing telegram command:\n {traceback.format_exc()}')
+
+
+def _get_command_class(update: Update, commands_name_to_class: Dict[str, TelegramCommand]):
+    text = update.message.text
+    command = text.splitlines()[0]
+
+    if command not in commands_name_to_class:
+        raise InvalidTelegramCommandException(f'Invalid telegram command: {command}')
+
+    return commands_name_to_class[command]
 
 
 class TelegramChannel(CommunicationChannel):
@@ -52,7 +52,7 @@ class TelegramChannel(CommunicationChannel):
         self._chat_id = ConfigManager.config.get(TelegramChannel.KEY_CHAT_ID)
 
     async def start(self):
-        self._application.add_handlers([MessageHandler(filters=None, callback=handle_command)])
+        self._application.add_handlers([MessageHandler(filters=None, callback=_handle_command)])
 
         await self._application.initialize()
         await self._application.start()

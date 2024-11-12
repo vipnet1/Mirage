@@ -4,10 +4,10 @@ from mirage.config.config import Config
 from mirage.config.config_manager import ConfigManager
 
 
-class UpdateConfigCommand(TelegramCommand):
-    COMMAND_NAME = 'update-config'
+class OverrideConfigCommand(TelegramCommand):
+    COMMAND_NAME = 'override-config'
 
     async def execute(self):
-        config_update = Config(json.loads(self._clean_text), 'Update Config for original Config')
-        ConfigManager.update_config(config_update)
+        override_config = Config(json.loads(self._clean_text), 'Override Config')
+        ConfigManager.override_config(override_config)
         await self._context.bot.send_message(self._update.effective_chat.id, 'Done!')

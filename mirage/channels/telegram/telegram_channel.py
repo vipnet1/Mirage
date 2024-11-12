@@ -4,7 +4,9 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes
 from mirage.channels.channels_manager import ChannelsManager
 from mirage.channels.communication_channel import CommunicationChannel
+from mirage.channels.telegram.commands.override_config import OverrideConfigCommand
 from mirage.channels.telegram.commands.show_config import ShowConfigCommand
+from mirage.channels.telegram.commands.update_config import UpdateConfigCommand
 from mirage.channels.telegram.telegram_command import TelegramCommand
 from mirage.config.config_manager import ConfigManager
 
@@ -18,13 +20,17 @@ async def handle_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         text = update.message.text
         command = text.splitlines()[0]
 
-        available_commands = [ShowConfigCommand.COMMAND_NAME]
+        available_commands = [ShowConfigCommand.COMMAND_NAME, UpdateConfigCommand.COMMAND_NAME, OverrideConfigCommand.COMMAND_NAME]
         if command not in available_commands:
             raise InvalidTelegramCommandException(f'Invalid telegram command: {command}')
 
         command_object: TelegramCommand = None
         if command == ShowConfigCommand.COMMAND_NAME:
             command_object = ShowConfigCommand(update, context)
+        elif command == UpdateConfigCommand.COMMAND_NAME:
+            command_object = UpdateConfigCommand(update, context)
+        elif command == OverrideConfigCommand.COMMAND_NAME:
+            command_object = OverrideConfigCommand(update, context)
 
         await command_object.execute()
 

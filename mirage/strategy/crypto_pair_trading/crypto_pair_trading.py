@@ -8,7 +8,6 @@ import pymongo
 import consts
 from mirage.algorithm.borrow import borrow_algorithm
 from mirage.algorithm.simple_order import simple_order_algorithm
-from mirage.config.config_manager import ConfigManager
 from mirage.database.common_operations import insert_dataclass, update_dataclass
 from mirage.database.db_config import DbConfig
 from mirage.strategy.strategy import Strategy
@@ -47,8 +46,8 @@ class PositionInfo:
 class CryptoPairTrading(Strategy):
     description = 'Go long & short on pairs. Binance margin account.'
 
-    KEY_ALLOCATED_CAPITAL = 'strategies.crypto_pair_trading.allocated_capital'
-    KEY_MAX_LOSS_PERCENT = 'strategies.crypto_pair_trading.max_loss_percent'
+    STRATEGY_INSTANCE_CONFIG_KEY_ALLOCATED_CAPITAL = 'allocated_capital'
+    STRATEGY_INSTANCE_CONFIG_KEY_MAX_LOSS_PERCENT = 'max_loss_percent'
 
     DATA_PAIR = 'pair'
     DATA_ACTION = 'action'
@@ -245,8 +244,8 @@ class CryptoPairTrading(Strategy):
         return PairInfo(first_pair, second_pair, ratio)
 
     def _calculate_positions_for_coins(self, ratio: float) -> Tuple[float, float]:
-        allocated_capital = ConfigManager.config.get(CryptoPairTrading.KEY_ALLOCATED_CAPITAL)
-        max_loss_percent = ConfigManager.config.get(CryptoPairTrading.KEY_MAX_LOSS_PERCENT)
+        allocated_capital = self._strategy_instance_config.get(CryptoPairTrading.STRATEGY_INSTANCE_CONFIG_KEY_ALLOCATED_CAPITAL)
+        max_loss_percent = self._strategy_instance_config.get(CryptoPairTrading.STRATEGY_INSTANCE_CONFIG_KEY_MAX_LOSS_PERCENT)
         stoploss_distance = self._strategy_data.get(CryptoPairTrading.DATA_STOPLOSS_DISTANCE)
 
         coin1_amount = allocated_capital * (max_loss_percent / 100) / stoploss_distance

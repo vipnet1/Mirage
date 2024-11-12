@@ -12,4 +12,5 @@ class ShowConfigCommand(TelegramCommand):
         await self._context.bot.send_message(self._update.effective_chat.id, self._get_message_to_send(config_to_show))
 
     def _get_message_to_send(self, config_to_show: Config):
-        return 'Non Sensitive Config:\n' + json.dumps(config_to_show.raw_dict)
+        return 'Non Sensitive Config:\n' + json.dumps(config_to_show.raw_dict) \
+            + '\n\nExecution Config:\n' + json.dumps(ConfigManager.execution_config.raw_dict)

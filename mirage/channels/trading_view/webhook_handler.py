@@ -23,7 +23,11 @@ class WebhookHandler:
         self._request_json = RequestJson(request_data)
 
     async def process_request(self):
-        logging.info('Received webhook data: %s', self._request_json.raw_dict)
+        logging.debug('Received webhook data: %s', self._request_json.raw_dict)
+
+        if ConfigManager.execution_config.get(consts.EXECUTION_CONFIG_KEY_SUSPENT):
+            logging.warning('Mirage suspent, ignoring request.')
+            return
 
         result = insert_dict(
             consts.DB_NAME_HISTORY,
@@ -60,7 +64,7 @@ class WebhookHandler:
                 self._request_json.get(WebhookHandler.KEY_DATA),
                 Config(
                     ConfigManager.config.get(f'{WebhookHandler.CONFIG_KEY_STRATEGIES}.{strategy_name}.{strategy_instance_id}'),
-                    'Strategy Instance Config'
+                    'Strategy instance config'
                 )
             )
 

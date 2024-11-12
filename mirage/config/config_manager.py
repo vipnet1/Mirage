@@ -9,8 +9,15 @@ class ConfigLoadException(Exception):
 
 
 class ConfigManager:
-    MAIN_CONFIG = 'Main Config'
+    MAIN_CONFIG = 'Main config'
     config: Config = None
+    execution_config: Config = None
+
+    @staticmethod
+    def init_execution_config() -> None:
+        ConfigManager.execution_config = Config({
+            consts.EXECUTION_CONFIG_KEY_SUSPENT: False
+        }, 'Execution config')
 
     @staticmethod
     def load_config() -> None:
@@ -28,6 +35,10 @@ class ConfigManager:
     def update_config(config_update: Config) -> None:
         ConfigManager.config.raw_dict.update(config_update.raw_dict)
         ConfigManager._save_config()
+
+    @staticmethod
+    def update_execution_config(config_update: Config) -> None:
+        ConfigManager.execution_config.raw_dict.update(config_update.raw_dict)
 
     @staticmethod
     def override_config(config_override: Config) -> None:

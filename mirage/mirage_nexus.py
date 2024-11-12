@@ -8,6 +8,7 @@ from mirage.database.db_config import DbConfig
 
 class MirageNexus:
     async def bootstrap(self):
+        ConfigManager.init_execution_config()
         ConfigManager.load_config()
 
         DbConfig.init_db_connection()

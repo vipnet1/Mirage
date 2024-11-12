@@ -7,11 +7,12 @@ from mirage.channels.communication_channel import CommunicationChannel
 from mirage.channels.telegram.commands.override_config import OverrideConfigCommand
 from mirage.channels.telegram.commands.show_config import ShowConfigCommand
 from mirage.channels.telegram.commands.update_config import UpdateConfigCommand
+from mirage.channels.telegram.exceptions import MirageTelegramException
 from mirage.channels.telegram.telegram_command import TelegramCommand
 from mirage.config.config_manager import ConfigManager
 
 
-class InvalidTelegramCommandException(Exception):
+class InvalidTelegramCommandException(MirageTelegramException):
     pass
 
 

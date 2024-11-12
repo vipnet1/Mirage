@@ -1,8 +1,10 @@
+from datetime import datetime, timedelta, timezone
 import logging
 import traceback
 from typing import Dict
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes
+import consts
 from mirage.channels.channels_manager import ChannelsManager
 from mirage.channels.communication_channel import CommunicationChannel
 from mirage.channels.telegram.commands.override_config import OverrideConfigCommand
@@ -17,11 +19,16 @@ class InvalidTelegramCommandException(MirageTelegramException):
     pass
 
 
+class TelegramCommandTimeoutException(MirageTelegramException):
+    pass
+
+
 async def _handle_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     available_commands = [ShowConfigCommand, UpdateConfigCommand, OverrideConfigCommand]
     commands_name_to_class = {cmd.COMMAND_NAME: cmd for cmd in available_commands}
 
     try:
+        _verify_command_timeout(update)
         command_object = _get_command_class(update, commands_name_to_class)(update, context)
         await command_object.execute()
 
@@ -31,6 +38,12 @@ async def _handle_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     except Exception as exc:
         logging.exception(exc)
         await ChannelsManager.get_communication_channel().send_message(f'Exception processing telegram command:\n {traceback.format_exc()}')
+
+
+def _verify_command_timeout(update: Update) -> None:
+    utc_now = datetime.now(timezone.utc)
+    if update.message.date + timedelta(seconds=consts.IGNORE_TELEGRAM_COMMANDS_AFTER_SECONDS) < utc_now:
+        raise TelegramCommandTimeoutException(f'More than {consts.IGNORE_TELEGRAM_COMMANDS_AFTER_SECONDS} seconds passed. Ignoring command.')
 
 
 def _get_command_class(update: Update, commands_name_to_class: Dict[str, TelegramCommand]):

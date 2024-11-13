@@ -24,6 +24,12 @@ class TelegramCommandTimeoutException(MirageTelegramException):
 
 
 async def _handle_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if ConfigManager.execution_config.get(consts.EXECUTION_CONFIG_KEY_TERMINATE):
+        logging.warning('Ignoring telegram command - awaiting termination.')
+        return
+
+    ChannelsManager.channels[consts.CHANNEL_TELEGRAM].active_operations.variable += 1
+
     available_commands = [ShowConfigCommand, UpdateConfigCommand, OverrideConfigCommand]
     commands_name_to_class = {cmd.COMMAND_NAME: cmd for cmd in available_commands}
 
@@ -38,6 +44,8 @@ async def _handle_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     except Exception as exc:
         logging.exception(exc)
         await ChannelsManager.get_communication_channel().send_message(f'Exception processing telegram command:\n {traceback.format_exc()}')
+
+    ChannelsManager.channels[consts.CHANNEL_TELEGRAM].active_operations.variable -= 1
 
 
 def _verify_command_timeout(update: Update) -> None:
@@ -61,6 +69,7 @@ class TelegramChannel(CommunicationChannel):
     KEY_CHAT_ID = 'channels.telegram.chat_id'
 
     def __init__(self):
+        super().__init__()
         self._application = ApplicationBuilder().token(ConfigManager.config.get(TelegramChannel.KEY_TOKEN)).build()
         self._chat_id = ConfigManager.config.get(TelegramChannel.KEY_CHAT_ID)
 

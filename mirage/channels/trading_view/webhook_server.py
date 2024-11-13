@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request
 import consts
 from mirage.channels.channels_manager import ChannelsManager
 from mirage.channels.trading_view.webhook_handler import WebhookHandler
+from mirage.config.config_manager import ConfigManager
 
 
 class WebhookServer:
@@ -13,7 +14,12 @@ class WebhookServer:
 
         @self.app.post(consts.WEBHOOK_SERVER_ENDPOINT)
         async def webhook_endpoint(request: Request):
+            if ConfigManager.execution_config.get(consts.EXECUTION_CONFIG_KEY_TERMINATE):
+                logging.warning('Ignoring tradingview command - awaiting termination.')
+                return
+
             try:
+                ChannelsManager.channels[consts.CHANNEL_TRADING_VIEW].active_operations.variable += 1
                 request_data = await request.json()
 
                 webhook_handler = WebhookHandler(request_data)
@@ -23,6 +29,7 @@ class WebhookServer:
                 logging.exception(exc)
                 await ChannelsManager.get_communication_channel().send_message(f'Exception processing webhook request:\n {traceback.format_exc()}')
 
+            ChannelsManager.channels[consts.CHANNEL_TRADING_VIEW].active_operations.variable -= 1
             return {"status": "success"}
 
     async def run_server(self):

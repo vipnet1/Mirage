@@ -16,7 +16,8 @@ class ConfigManager:
     @staticmethod
     def init_execution_config() -> None:
         ConfigManager.execution_config = Config({
-            consts.EXECUTION_CONFIG_KEY_SUSPEND: False
+            consts.EXECUTION_CONFIG_KEY_SUSPEND: False,
+            consts.EXECUTION_CONFIG_KEY_TERMINATE: False
         }, 'Execution config')
 
     @staticmethod

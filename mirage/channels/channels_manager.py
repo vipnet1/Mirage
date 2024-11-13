@@ -1,3 +1,4 @@
+import asyncio
 from typing import Dict
 import consts
 from mirage.channels.channel import Channel
@@ -47,7 +48,15 @@ class ChannelsManager:
     async def stop_all_channels():
         while ChannelsManager.channels_addition_order:
             channel_name = ChannelsManager.channels_addition_order.pop()
-            await ChannelsManager.channels[channel_name].stop()
+            channel = ChannelsManager.channels[channel_name]
+
+            await ChannelsManager._wait_channel_operations_complete(channel)
+            await channel.stop()
 
         ChannelsManager.channels = {}
         ChannelsManager.communication_channels = {}
+
+    @staticmethod
+    async def _wait_channel_operations_complete(channel: Channel):
+        while channel.active_operations.variable > 0:
+            await asyncio.sleep(1)

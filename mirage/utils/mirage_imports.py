@@ -11,3 +11,10 @@ def import_object(file_name: str, function_name: str):
         return getattr(module, function_name)
     except ImportError as e:
         raise MirageImportsException from e
+
+
+def import_package(package_name: str):
+    try:
+        return importlib.import_module(package_name)
+    except ImportError as e:
+        raise MirageImportsException from e

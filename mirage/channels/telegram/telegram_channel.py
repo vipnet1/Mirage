@@ -7,6 +7,7 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes
 import consts
 from mirage.channels.channels_manager import ChannelsManager
 from mirage.channels.communication_channel import CommunicationChannel
+from mirage.channels.telegram.commands.backup import BackupCommand
 from mirage.channels.telegram.commands.override_config import OverrideConfigCommand
 from mirage.channels.telegram.commands.show_config import ShowConfigCommand
 from mirage.channels.telegram.commands.update_config import UpdateConfigCommand
@@ -30,7 +31,7 @@ async def _handle_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     ChannelsManager.channels[consts.CHANNEL_TELEGRAM].active_operations.variable += 1
 
-    available_commands = [ShowConfigCommand, UpdateConfigCommand, OverrideConfigCommand]
+    available_commands = [ShowConfigCommand, UpdateConfigCommand, OverrideConfigCommand, BackupCommand]
     commands_name_to_class = {cmd.COMMAND_NAME: cmd for cmd in available_commands}
 
     try:

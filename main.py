@@ -3,18 +3,24 @@ from pathlib import Path
 import platform
 import signal
 import logging
+
 from mirage.config.config_manager import ConfigManager
 from mirage.mirage_nexus import MirageNexus
 from mirage.logging.logging_config import configure_logger
+from mirage.utils.mirage_imports import import_package
 import consts
+
 
 shutdown_flag = False
 
 
 def os_config():
     if platform.system() == consts.PLATFORM_NAME_WINDOWS:
-        # Faild without it running ccxt asynchronically
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        winloop = import_package('winloop')
+        winloop.install()
+    else:
+        uvloop = import_package('uvloop')
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
 def create_folders():

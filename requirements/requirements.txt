@@ -3,3 +3,5 @@ uvicorn>=0.30.5,<1.0.0
 python-telegram-bot>=21.4,<22.0
 ccxt>=4.3.87,<5.0.0
 pymongo>=4.8.0,<5.0.0
+google-auth>=2.36.0,<3.0.0
+google-api-python-client>=2.153.0,<3.0.0

@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 from typing import Iterator
 import consts
@@ -19,6 +20,12 @@ def _iterate_strategy_configs() -> Iterator[tuple[Path, dict]]:
         with file_path.open('r') as file:
             data = json.load(file)
             yield file_path, data
+
+
+def _create_strategy_config(strategy_name: str, strategy_instance: str):
+    strategy_instance_config = Path(consts.STRATEGIES_CONFIG_FOLDER) / strategy_name / f'{strategy_instance}.json'
+    strategy_instance_config.parent.mkdir(parents=True, exist_ok=True)
+    strategy_instance_config.touch()
 
 
 def _get_strategy_config_path(strategy_name: str, strategy_instance: str) -> Path:
@@ -102,4 +109,13 @@ class ConfigManager:
 
     @staticmethod
     def override_strategy_config(config_override: Config, strategy_name: str, strategy_instance: str) -> None:
-        _save_config(config_override, _get_strategy_config_path(strategy_name, strategy_instance))
+        strategy_config_path = None
+        try:
+            strategy_config_path = _get_strategy_config_path(strategy_name, strategy_instance)
+
+        except ConfigLoadException:
+            logging.info('Creating new strategy config instance. Name: %s, Instance: %s.', strategy_name, strategy_instance)
+            _create_strategy_config(strategy_name, strategy_instance)
+            strategy_config_path = _get_strategy_config_path(strategy_name, strategy_instance)
+
+        _save_config(config_override, strategy_config_path)

@@ -11,15 +11,15 @@ class OverrideConfigCommand(TelegramCommand):
     CONFIG_NAME_STRATEGY = 'strategy'
 
     async def execute(self):
-        config_to_update = self._get_top_line()
-        if not config_to_update:
+        config_to_override = self._get_top_line()
+        if not config_to_override:
             raise MirageTelegramException('Provide config to override on second line')
 
         self._remove_first_line()
 
-        if config_to_update == OverrideConfigCommand.CONFIG_NAME_MAIN:
+        if config_to_override == OverrideConfigCommand.CONFIG_NAME_MAIN:
             self._override_main_config()
-        elif config_to_update == OverrideConfigCommand.CONFIG_NAME_STRATEGY:
+        elif config_to_override == OverrideConfigCommand.CONFIG_NAME_STRATEGY:
             self._override_strategy_config()
         else:
             raise MirageTelegramException(
@@ -31,7 +31,8 @@ class OverrideConfigCommand(TelegramCommand):
         await self._context.bot.send_message(self._update.effective_chat.id, 'Done!')
 
     def _override_main_config(self):
-        pass
+        config_override = Config(json.loads(self._clean_text), 'Override main config')
+        ConfigManager.override_main_config(config_override)
 
     def _override_strategy_config(self):
         strategy_name = self._get_top_line()
@@ -46,5 +47,5 @@ class OverrideConfigCommand(TelegramCommand):
 
         self._remove_first_line()
 
-        config_update = Config(json.loads(self._clean_text), 'Override strategy config')
-        ConfigManager.override_strategy_config(config_update, strategy_name, strategy_instance)
+        config_override = Config(json.loads(self._clean_text), 'Override strategy config')
+        ConfigManager.override_strategy_config(config_override, strategy_name, strategy_instance)

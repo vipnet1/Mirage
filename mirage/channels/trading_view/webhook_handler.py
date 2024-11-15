@@ -7,7 +7,7 @@ from mirage.channels.trading_view.exceptions import WebhookRequestException
 from mirage.channels.trading_view.request_json import RequestJson
 from mirage.config.config import Config, ConfigException
 from mirage.config.config_manager import ConfigManager
-from mirage.database.common_operations import insert_dict
+from mirage.database.mongo.common_operations import insert_dict
 from mirage.utils.mirage_imports import MirageImportsException, import_object
 from mirage.strategy.strategy import Strategy
 

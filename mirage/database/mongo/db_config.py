@@ -4,7 +4,7 @@ from mirage.config.config_manager import ConfigManager
 
 
 class DbConfig:
-    KEY_CONNECTION_STRING = 'database_connection_string'
+    KEY_CONNECTION_STRING = 'databases.mongo.database_connection_string'
 
     client: pymongo.MongoClient = None
 

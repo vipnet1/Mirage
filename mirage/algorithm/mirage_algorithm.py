@@ -5,7 +5,7 @@ from typing import List
 
 import consts
 from mirage.brokers.binance.binance import Binance
-from mirage.database.common_operations import insert_dict
+from mirage.database.mongo.common_operations import insert_dict
 from mirage.utils.dict_utils import dataclass_to_dict
 
 

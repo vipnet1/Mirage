@@ -8,8 +8,8 @@ import pymongo
 import consts
 from mirage.algorithm.borrow import borrow_algorithm
 from mirage.algorithm.simple_order import simple_order_algorithm
-from mirage.database.common_operations import insert_dataclass, update_dataclass
-from mirage.database.db_config import DbConfig
+from mirage.database.mongo.common_operations import insert_dataclass, update_dataclass
+from mirage.database.mongo.db_config import DbConfig
 from mirage.strategy.strategy import Strategy
 from mirage.utils.dict_utils import dataclass_to_dict
 from mirage.utils.symbol_utils import get_base_symbol

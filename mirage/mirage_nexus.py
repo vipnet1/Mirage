@@ -3,7 +3,7 @@ from mirage.channels.channels_manager import ChannelsManager
 from mirage.channels.telegram.telegram_channel import TelegramChannel
 from mirage.channels.trading_view.trading_view_channel import TradingViewChannel
 from mirage.config.config_manager import ConfigManager
-from mirage.database.db_config import DbConfig
+from mirage.database.mongo.db_config import DbConfig
 
 
 class MirageNexus:

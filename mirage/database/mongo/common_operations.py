@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict
 from pymongo.results import InsertOneResult
 import consts
-from mirage.database.db_config import DbConfig
+from mirage.database.mongo.db_config import DbConfig
 from mirage.utils.dict_utils import clean_dict, dataclass_to_dict
 
 

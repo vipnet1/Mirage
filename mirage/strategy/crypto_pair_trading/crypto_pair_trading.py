@@ -29,6 +29,9 @@ class PairInfo:
 @dataclass
 class PositionInfo:
     _id: Optional[ObjectId] = None
+    request_data_id: Optional[str] = None
+    strategy_instance: Optional[str] = None
+
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -115,6 +118,8 @@ class CryptoPairTrading(Strategy):
             consts.DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING,
             consts.COLLECTION_POSITION_INFO,
             PositionInfo(
+                request_data_id=self._request_data_id,
+                strategy_instance=self._strategy_instance,
                 chart_pair=self._strategy_data.get(CryptoPairTrading.DATA_PAIR),
                 side=side,
                 pair=pair,
@@ -224,10 +229,8 @@ class CryptoPairTrading(Strategy):
         ).execute()
 
     def _get_recent_position_info_from_db(self):
-        pair_raw = self._strategy_data.get(CryptoPairTrading.DATA_PAIR)
-
         return DbConfig.client[consts.DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING][consts.COLLECTION_POSITION_INFO].find_one(
-            dataclass_to_dict(PositionInfo(chart_pair=pair_raw)),
+            dataclass_to_dict(PositionInfo(strategy_instance=self._strategy_instance)),
             sort=[(consts.RECORD_KEY_CREATED_AT, pymongo.DESCENDING)]
         )
 

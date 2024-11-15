@@ -9,7 +9,7 @@ from mirage.database.mongo.db_config import DbConfig
 class MirageNexus:
     async def bootstrap(self):
         ConfigManager.init_execution_config()
-        ConfigManager.load_config()
+        ConfigManager.load_main_config()
 
         DbConfig.init_db_connection()
 

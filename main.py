@@ -25,6 +25,7 @@ def os_config():
 
 def create_folders():
     Path(consts.CONFIG_FOLDER).mkdir(parents=True, exist_ok=True)
+    Path(consts.STRATEGIES_CONFIG_FOLDER).mkdir(parents=True, exist_ok=True)
     Path(consts.LOG_FOLDER).mkdir(parents=True, exist_ok=True)
 
 

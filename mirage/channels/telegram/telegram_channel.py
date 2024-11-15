@@ -12,6 +12,7 @@ from mirage.channels.telegram.commands.override_config import OverrideConfigComm
 from mirage.channels.telegram.commands.show_config import ShowConfigCommand
 from mirage.channels.telegram.commands.update_config import UpdateConfigCommand
 from mirage.channels.telegram.exceptions import MirageTelegramException
+from mirage.channels.telegram.telegram_aliases import TelegramAliases
 from mirage.channels.telegram.telegram_command import TelegramCommand
 from mirage.config.config_manager import ConfigManager
 
@@ -36,11 +37,15 @@ async def _handle_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     try:
         _verify_command_timeout(update)
-        command_object = _get_command_class(update, commands_name_to_class)(update, context)
+        command_class, command_text = _get_command_class(update, commands_name_to_class)
+        command_object = command_class(command_text, update, context)
         await command_object.execute()
 
     except InvalidTelegramCommandException:
-        await ChannelsManager.get_communication_channel().send_message(f'Available commands:\n {list(commands_name_to_class.keys())}')
+        telegram_aliases = TelegramAliases()
+        await ChannelsManager.get_communication_channel().send_message(
+            f'Available commands:\n {list(commands_name_to_class.keys()) + list(telegram_aliases.aliases.keys())}'
+        )
 
     except Exception as exc:
         logging.exception(exc)
@@ -55,14 +60,20 @@ def _verify_command_timeout(update: Update) -> None:
         raise TelegramCommandTimeoutException(f'More than {consts.IGNORE_TELEGRAM_COMMANDS_AFTER_SECONDS} seconds passed. Ignoring command.')
 
 
-def _get_command_class(update: Update, commands_name_to_class: Dict[str, TelegramCommand]):
-    text = update.message.text
+def _get_command_class(update: Update, commands_name_to_class: Dict[str, TelegramCommand], alias: str = None) -> tuple[type[TelegramCommand], str]:
+    text = alias if alias is not None else update.message.text
     command = text.splitlines()[0]
 
-    if command not in commands_name_to_class:
+    if command in commands_name_to_class:
+        return commands_name_to_class[command], text
+
+    telegram_aliases = TelegramAliases()
+    if command not in telegram_aliases.aliases:
         raise InvalidTelegramCommandException(f'Invalid telegram command: {command}')
 
-    return commands_name_to_class[command]
+    alias = telegram_aliases.aliases[command]
+    command_class, _ = _get_command_class(update, commands_name_to_class, alias)
+    return command_class, alias
 
 
 class TelegramChannel(CommunicationChannel):

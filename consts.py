@@ -22,6 +22,7 @@ RECORD_KEY_CREATED_AT = 'created_at'
 RECORD_KEY_UPDATED_AT = 'updated_at'
 
 STRATEGY_MODULE_PREFIX = 'mirage.strategy'
+STRATEGY_MANAGER_MODULE_PREFIX = 'mirage.strategy_manager'
 
 WEBHOOK_SERVER_HOST = '0.0.0.0'
 WEBHOOK_SERVER_PORT = 8080

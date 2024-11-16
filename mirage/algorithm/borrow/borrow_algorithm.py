@@ -33,7 +33,7 @@ class BorrowAlgorithm(MirageAlgorithm):
         else:
             raise BorrowAlgorithmException(f'Unknown operation {command.operation}')
 
-        self._command_results.append(order)
+        self.command_results.append(order)
 
     async def _process_operation_borrow(self, command: Command):
         binance = Binance()
@@ -44,5 +44,5 @@ class BorrowAlgorithm(MirageAlgorithm):
     async def _process_operation_repay(self, command: Command):
         binance = Binance()
         async with binance.exchange:
-            logging.info('Borrowing coin on Binance margin. Symbol %s, amount: %s', command.symbol, command.amount)
+            logging.info('Repaying coin on Binance margin. Symbol %s, amount: %s', command.symbol, command.amount)
             return await binance.exchange.repay_cross_margin(command.symbol, command.amount)

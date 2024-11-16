@@ -11,6 +11,7 @@ from mirage.algorithm.simple_order import simple_order_algorithm
 from mirage.database.mongo.common_operations import insert_dataclass, update_dataclass
 from mirage.database.mongo.db_config import DbConfig
 from mirage.strategy.strategy import Strategy, StrategyException
+from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.utils.dict_utils import dataclass_to_dict
 from mirage.utils.symbol_utils import get_base_symbol
 
@@ -63,31 +64,50 @@ class CryptoPairTrading(Strategy):
     SIDE_LONG = 'long'
     SIDE_SHORT = 'short'
 
-    async def execute(self, request_data_id: str):
-        await super().execute(request_data_id)
+    def __init__(
+            self,
+            request_data_id: str,
+            strategy_data: dict[str, any],
+            strategy_name: str,
+            strategy_instance: str,
+    ):
+        super().__init__(request_data_id, strategy_data, strategy_name, strategy_instance)
+        self._existing_position = None
+
+    async def should_execute_strategy(self) -> bool:
+        self._existing_position = self._get_recent_position_info()
+
+        pair_raw = self.strategy_data.get(CryptoPairTrading.DATA_PAIR)
+        action = self.strategy_data.get(CryptoPairTrading.DATA_ACTION)
+
+        if action == CryptoPairTrading.ACTION_ENTRY:
+            if self._existing_position:
+                logging.warning("Can't enter new position: another one exists with the chart pair %s", pair_raw)
+                return False
+        elif action == CryptoPairTrading.ACTION_EXIT:
+            if not self._existing_position:
+                logging.warning("Can't exit position as not in active with chart pair %s", pair_raw)
+                return False
+        else:
+            raise CryptoPairTradingException(f'Invalid action {action} with chart pair {pair_raw}')
+
+        return True
+
+    async def execute(self) -> StrategyExecutionStatus:
+        await super().execute()
 
         existing_position = self._get_recent_position_info()
         pair_info = self._parse_pair_info()
-
-        pair_raw = self._strategy_data.get(CryptoPairTrading.DATA_PAIR)
-        action = self._strategy_data.get(CryptoPairTrading.DATA_ACTION)
+        action = self.strategy_data.get(CryptoPairTrading.DATA_ACTION)
 
         if action == CryptoPairTrading.ACTION_ENTRY:
-            if existing_position:
-                logging.warning("Can't enter new position: another one exists with the chart pair %s", pair_raw)
-                return
-
             await self._enter_new_position(pair_info)
-
+            return StrategyExecutionStatus.FINISHED
         elif action == CryptoPairTrading.ACTION_EXIT:
-            if not existing_position:
-                logging.warning("Can't exit position as not in active trade with chart pair %s", pair_raw)
-                return
-
             await self._exit_current_position(pair_info, existing_position)
+            return StrategyExecutionStatus.FINISHED
 
-        else:
-            raise CryptoPairTradingException(f'Invalid action {action} with chart pair {pair_raw}')
+        raise CryptoPairTradingException('Invalid action - should not get there! This had to be already checked.')
 
     def _get_recent_position_info(self) -> Optional[PositionInfo]:
         recent_position = self._get_recent_position_info_from_db()
@@ -103,8 +123,8 @@ class CryptoPairTrading(Strategy):
     async def _enter_new_position(self, pair_info: PairInfo):
         coin1_amount, coin2_amount = self._calculate_positions_for_coins(pair_info.ratio)
 
-        pair_raw = self._strategy_data.get(CryptoPairTrading.DATA_PAIR)
-        side = self._strategy_data.get(CryptoPairTrading.DATA_SIDE)
+        pair_raw = self.strategy_data.get(CryptoPairTrading.DATA_PAIR)
+        side = self.strategy_data.get(CryptoPairTrading.DATA_SIDE)
 
         if side == CryptoPairTrading.SIDE_LONG:
             await self._binance_enter_new_position(pair_info.first_pair, coin1_amount, pair_info.second_pair, coin2_amount)
@@ -118,9 +138,9 @@ class CryptoPairTrading(Strategy):
             consts.DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING,
             consts.COLLECTION_POSITION_INFO,
             PositionInfo(
-                request_data_id=self._request_data_id,
-                strategy_instance=self._strategy_instance,
-                chart_pair=self._strategy_data.get(CryptoPairTrading.DATA_PAIR),
+                request_data_id=self.request_data_id,
+                strategy_instance=self.strategy_instance,
+                chart_pair=self.strategy_data.get(CryptoPairTrading.DATA_PAIR),
                 side=side,
                 pair=pair,
                 is_open=True,
@@ -131,7 +151,7 @@ class CryptoPairTrading(Strategy):
 
     async def _binance_enter_new_position(self, long_pair: str, long_amount: float, short_pair: str, short_amount: float):
         await borrow_algorithm.BorrowAlgorithm(
-            self._request_data_id,
+            self.request_data_id,
             [
                 borrow_algorithm.Command(
                     strategy=self.__class__.__name__,
@@ -144,7 +164,7 @@ class CryptoPairTrading(Strategy):
         ).execute()
 
         await simple_order_algorithm.SimpleOrderAlgorithm(
-            self._request_data_id,
+            self.request_data_id,
             [
                 simple_order_algorithm.CommandAmount(
                     strategy=self.__class__.__name__,
@@ -190,7 +210,7 @@ class CryptoPairTrading(Strategy):
 
     async def _binance_exit_current_position(self, long_pair: str, long_amount: float, short_pair: str, short_amount: float):
         await simple_order_algorithm.SimpleOrderAlgorithm(
-            self._request_data_id,
+            self.request_data_id,
             [
                 simple_order_algorithm.CommandAmount(
                     strategy=self.__class__.__name__,
@@ -216,7 +236,7 @@ class CryptoPairTrading(Strategy):
         ).execute()
 
         await borrow_algorithm.BorrowAlgorithm(
-            self._request_data_id,
+            self.request_data_id,
             [
                 borrow_algorithm.Command(
                     strategy=self.__class__.__name__,
@@ -230,12 +250,12 @@ class CryptoPairTrading(Strategy):
 
     def _get_recent_position_info_from_db(self):
         return DbConfig.client[consts.DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING][consts.COLLECTION_POSITION_INFO].find_one(
-            dataclass_to_dict(PositionInfo(strategy_instance=self._strategy_instance)),
+            dataclass_to_dict(PositionInfo(strategy_instance=self.strategy_instance)),
             sort=[(consts.RECORD_KEY_CREATED_AT, pymongo.DESCENDING)]
         )
 
     def _parse_pair_info(self) -> PairInfo:
-        pair_raw = self._strategy_data.get(CryptoPairTrading.DATA_PAIR)
+        pair_raw = self.strategy_data.get(CryptoPairTrading.DATA_PAIR)
 
         parts = pair_raw.split('-')
         first_pair, ratio_string = parts
@@ -247,9 +267,9 @@ class CryptoPairTrading(Strategy):
         return PairInfo(first_pair, second_pair, ratio)
 
     def _calculate_positions_for_coins(self, ratio: float) -> Tuple[float, float]:
-        allocated_capital = self._strategy_instance_config.get(CryptoPairTrading.STRATEGY_INSTANCE_CONFIG_KEY_ALLOCATED_CAPITAL)
-        max_loss_percent = self._strategy_instance_config.get(CryptoPairTrading.STRATEGY_INSTANCE_CONFIG_KEY_MAX_LOSS_PERCENT)
-        stoploss_distance = self._strategy_data.get(CryptoPairTrading.DATA_STOPLOSS_DISTANCE)
+        allocated_capital = self.strategy_instance_config.get(CryptoPairTrading.STRATEGY_INSTANCE_CONFIG_KEY_ALLOCATED_CAPITAL)
+        max_loss_percent = self.strategy_instance_config.get(CryptoPairTrading.STRATEGY_INSTANCE_CONFIG_KEY_MAX_LOSS_PERCENT)
+        stoploss_distance = self.strategy_data.get(CryptoPairTrading.DATA_STOPLOSS_DISTANCE)
 
         coin1_amount = allocated_capital * (max_loss_percent / 100) / stoploss_distance
         coin2_amount = coin1_amount * ratio

@@ -3,7 +3,7 @@ from abc import ABCMeta
 from dataclasses import dataclass
 import logging
 from typing import Optional
-from mirage.algorithm.mirage_algorithm import CommandBase, MirageAlgorithm, MirageAlgorithmException
+from mirage.algorithm.mirage_algorithm import AlgorithmExecutionResult, CommandBase, MirageAlgorithm, MirageAlgorithmException
 from mirage.brokers.binance.binance import Binance
 
 
@@ -45,6 +45,13 @@ class SimpleOrderAlgorithm(MirageAlgorithm):
     OPERATION_BUY = 'buy'
     OPERATION_SELL = 'sell'
 
+    async def _build_algorithm_result(self, command: Command, command_result: dict[str: any]) -> AlgorithmExecutionResult:
+        cost = command_result['cost']
+        return AlgorithmExecutionResult(
+            -cost if command.operation == SimpleOrderAlgorithm.OPERATION_BUY else cost,
+            0
+        )
+
     async def _process_command(self, command: CommandBase):
         self._validate_command(command)
 
@@ -55,7 +62,7 @@ class SimpleOrderAlgorithm(MirageAlgorithm):
         else:
             raise SimpleOrderAlgorithmException(f'Unknown {self.__class__.__name__} command')
 
-        self._command_results.append(order)
+        self.command_results.append(order)
 
     def _validate_command(self, command: CommandBase):
         if command.operation not in [SimpleOrderAlgorithm.OPERATION_BUY, SimpleOrderAlgorithm.OPERATION_SELL]:

@@ -23,7 +23,6 @@ class CommandBase:
 @dataclass
 class AlgorithmExecutionResult:
     capital_flow: float
-    borrow_flow: float
 
 
 class MirageAlgorithm:
@@ -36,6 +35,14 @@ class MirageAlgorithm:
         self.commands = commands
         self.command_results = []
 
+    @abstractmethod
+    async def _process_command(self, command: dataclass):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _build_algorithm_result(self, command: dataclass, command_result: dict[str: any]) -> AlgorithmExecutionResult:
+        raise NotImplementedError()
+
     async def execute(self):
         logging.info('Executing %s', self.__class__.__name__)
 
@@ -43,6 +50,11 @@ class MirageAlgorithm:
             await self._process_command(command)
 
         await self._flush_command_results()
+
+    def process_algorithm_results(self) -> list[AlgorithmExecutionResult]:
+        return [
+            self._build_algorithm_result(self.commands[index], self.command_results[index]) for index in range(len(self.commands))
+        ]
 
     async def _flush_command_results(self):
         insert_dict(
@@ -55,16 +67,3 @@ class MirageAlgorithm:
                 'command_results': self.command_results
             }
         )
-
-    async def process_algorithm_results(self) -> list[AlgorithmExecutionResult]:
-        return [
-            await self._build_algorithm_result(self.commands[index], self.command_results[index]) for index in range(len(self.commands))
-        ]
-
-    @abstractmethod
-    async def _process_command(self, command: dataclass):
-        raise NotImplementedError()
-
-    @abstractmethod
-    async def _build_algorithm_result(self, command: dataclass, command_result: dict[str: any]) -> AlgorithmExecutionResult:
-        raise NotImplementedError()

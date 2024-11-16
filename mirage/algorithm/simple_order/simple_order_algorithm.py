@@ -45,11 +45,10 @@ class SimpleOrderAlgorithm(MirageAlgorithm):
     OPERATION_BUY = 'buy'
     OPERATION_SELL = 'sell'
 
-    async def _build_algorithm_result(self, command: Command, command_result: dict[str: any]) -> AlgorithmExecutionResult:
+    def _build_algorithm_result(self, command: Command, command_result: dict[str: any]) -> AlgorithmExecutionResult:
         cost = command_result['cost']
         return AlgorithmExecutionResult(
             -cost if command.operation == SimpleOrderAlgorithm.OPERATION_BUY else cost,
-            0
         )
 
     async def _process_command(self, command: CommandBase):

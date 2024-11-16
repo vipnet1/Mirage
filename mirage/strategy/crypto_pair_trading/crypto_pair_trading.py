@@ -102,10 +102,10 @@ class CryptoPairTrading(Strategy):
 
         if action == CryptoPairTrading.ACTION_ENTRY:
             await self._enter_new_position(pair_info)
-            return StrategyExecutionStatus.FINISHED
+            return StrategyExecutionStatus.ONGOING
         elif action == CryptoPairTrading.ACTION_EXIT:
             await self._exit_current_position(pair_info, existing_position)
-            return StrategyExecutionStatus.FINISHED
+            return StrategyExecutionStatus.RETURN_FUNDS
 
         raise CryptoPairTradingException('Invalid action - should not get there! This had to be already checked.')
 

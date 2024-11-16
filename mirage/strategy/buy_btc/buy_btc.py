@@ -11,8 +11,7 @@ class BuyBtc(Strategy):
 
     async def execute(self) -> StrategyExecutionStatus:
         await super().execute()
-
-        self._execute_algorithm(
+        await self._execute_algorithm(
             SimpleOrderAlgorithm(
                 self.request_data_id,
                 [
@@ -29,5 +28,4 @@ class BuyBtc(Strategy):
                 ]
             )
         )
-
-        return StrategyExecutionStatus.REDUCE_FUNDS
+        return StrategyExecutionStatus.RETURN_FUNDS

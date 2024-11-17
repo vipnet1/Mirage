@@ -1,7 +1,7 @@
 
 from dataclasses import dataclass
 import logging
-from mirage.algorithm.mirage_algorithm import AlgorithmExecutionResult, CommandBase, MirageAlgorithm
+from mirage.algorithm.mirage_algorithm import CommandBase, MirageAlgorithm
 from mirage.brokers.binance.binance import Binance
 
 
@@ -21,9 +21,6 @@ class BorrowAlgorithm(MirageAlgorithm):
 
     OPERATION_BORROW = 'borrow'
     OPERATION_REPAY = 'repay'
-
-    def _build_algorithm_result(self, command: Command, command_result: dict[str: any]) -> AlgorithmExecutionResult:
-        return AlgorithmExecutionResult(0)
 
     async def _process_command(self, command: dataclass):
         if not isinstance(command, Command):

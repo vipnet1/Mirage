@@ -17,11 +17,12 @@ class BinanceStrategyManager(StrategyManager):
     CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
     CONFIG_KEY_WALLET = 'strategy_manager.wallet'
 
-    async def _transfer_capital_to_strategy(self, allocated_capital: float) -> None:
+    async def _transfer_capital_to_strategy(self) -> None:
         wallet = self._strategy.strategy_instance_config.get(self.CONFIG_KEY_WALLET)
         base_currency = self._strategy.strategy_instance_config.get(self.CONFIG_KEY_BASE_CURRENCY)
 
         await TransferAlgorithm(
+            None,
             self._strategy.request_data_id,
             [
                 Command(
@@ -29,25 +30,26 @@ class BinanceStrategyManager(StrategyManager):
                     description=f'''Transfer strategy funds from funding wallet to {wallet} wallet.
                                 Strategy {self._strategy.strategy_name}, Instance: {self._strategy.strategy_instance}''',
                     asset=base_currency,
-                    amount=allocated_capital,
+                    amount=self._allocated_capital.variable,
                     from_wallet=BinanceStrategyManager.FUNDING_WALLET,
                     to_wallet=wallet
                 )
             ]
         ).execute()
 
-    async def _transfer_capital_from_strategy(self, capital_flow: float) -> None:
+    async def _transfer_capital_from_strategy(self) -> None:
         wallet = self._strategy.strategy_instance_config.get(BinanceStrategyManager.CONFIG_KEY_WALLET)
         base_currency = self._strategy.strategy_instance_config.get(BinanceStrategyManager.CONFIG_KEY_BASE_CURRENCY)
 
         await TransferAlgorithm(
+            None,
             self._strategy.request_data_id,
             [
                 Command(
                     strategy=self.__class__.__name__,
                     description=f'Transfer strategy funds from {wallet} wallet to funding wallet',
                     asset=base_currency,
-                    amount=capital_flow,
+                    amount=self._capital_flow.variable,
                     from_wallet=wallet,
                     to_wallet=BinanceStrategyManager.FUNDING_WALLET
                 )

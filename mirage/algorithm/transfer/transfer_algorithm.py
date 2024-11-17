@@ -1,7 +1,7 @@
 
 from dataclasses import dataclass
 import logging
-from mirage.algorithm.mirage_algorithm import AlgorithmExecutionResult, CommandBase, MirageAlgorithm
+from mirage.algorithm.mirage_algorithm import CommandBase, MirageAlgorithm
 from mirage.brokers.binance.binance import Binance
 
 
@@ -19,9 +19,6 @@ class Command(CommandBase):
 
 class TransferAlgorithm(MirageAlgorithm):
     description = 'Transfer funds between wallets in Binance'
-
-    def _build_algorithm_result(self, command: Command, command_result: dict[str: any]) -> AlgorithmExecutionResult:
-        return AlgorithmExecutionResult(0)
 
     async def _process_command(self, command: dataclass):
         if not isinstance(command, Command):

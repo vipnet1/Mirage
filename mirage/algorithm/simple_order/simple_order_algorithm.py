@@ -49,13 +49,16 @@ class SimpleOrderAlgorithm(MirageAlgorithm):
         self._validate_command(command)
 
         if isinstance(command, CommandAmount):
+            self._validate_have_funds()
             order = await self._process_command_amount(command)
         elif isinstance(command, CommandCost):
+            self._validate_have_funds(command.cost)
             order = await self._process_command_cost(command)
         else:
             raise SimpleOrderAlgorithmException(f'Unknown {self.__class__.__name__} command')
 
-        self._command_results.append(order)
+        self._capital_flow.variable += order['cost'] if command.operation == self.OPERATION_SELL else -order['cost']
+        self.command_results.append(order)
 
     def _validate_command(self, command: CommandBase):
         if command.operation not in [SimpleOrderAlgorithm.OPERATION_BUY, SimpleOrderAlgorithm.OPERATION_SELL]:

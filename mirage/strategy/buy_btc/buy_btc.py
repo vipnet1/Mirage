@@ -1,15 +1,19 @@
 from mirage.algorithm.simple_order.simple_order_algorithm import CommandCost, SimpleOrderAlgorithm
 from mirage.strategy.strategy import Strategy
+from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 
 
 class BuyBtc(Strategy):
     description = 'Buy 8$ worth of BTC. Binance spot account.'
 
-    async def execute(self, request_data_id: str):
-        await super().execute(request_data_id)
+    async def should_execute_strategy(self) -> bool:
+        return True
 
+    async def execute(self) -> StrategyExecutionStatus:
+        await super().execute()
         await SimpleOrderAlgorithm(
-            self._request_data_id,
+            self.capital_flow,
+            self.request_data_id,
             [
                 CommandCost(
                     strategy=self.__class__.__name__,
@@ -17,9 +21,10 @@ class BuyBtc(Strategy):
                     wallet=SimpleOrderAlgorithm.WALLET_SPOT,
                     type=SimpleOrderAlgorithm.TYPE_MARKET,
                     symbol='BTC/USDT',
-                    operation=SimpleOrderAlgorithm.OPERATION_BUY,
+                    operation=SimpleOrderAlgorithm.OPERATION_SELL,
                     cost=8,
                     price=None
                 )
             ]
         ).execute()
+        return StrategyExecutionStatus.RETURN_FUNDS

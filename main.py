@@ -5,6 +5,8 @@ import signal
 import logging
 
 from mirage.config.config_manager import ConfigManager
+from mirage.jobs.mirage_job_manager import MirageJobManager
+from mirage.jobs.self_update.self_update_job import SelfUpdateJob
 from mirage.mirage_nexus import MirageNexus
 from mirage.logging.logging_config import configure_logger
 from mirage.utils.mirage_imports import import_package
@@ -54,11 +56,20 @@ async def main():
 
     signal.signal(signal.SIGINT, signal_handler)
 
+    job_manager = MirageJobManager([
+        SelfUpdateJob(5)
+    ])
+
     logging.info('Main loop running')
+    loop_sleep_time = 1
     while not shutdown_flag:
         _check_termination_flag()
-        await asyncio.sleep(1)
+        job_manager.tick(loop_sleep_time)
+        await asyncio.sleep(loop_sleep_time)
 
+    logging.info('Waiting for jobs to complete')
+    await job_manager.wait_jobs_complete()
+    logging.info('Calling nexus shutdown')
     await mirage_nexus.shutdown()
 
 

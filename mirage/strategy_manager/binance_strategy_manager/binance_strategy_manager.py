@@ -22,13 +22,13 @@ class BinanceStrategyManager(StrategyManager):
         base_currency = self._strategy.strategy_instance_config.get(self.CONFIG_KEY_BASE_CURRENCY)
 
         await TransferAlgorithm(
-            None,
+            self._capital_flow,
             self._strategy.request_data_id,
             [
                 Command(
                     strategy=self.__class__.__name__,
-                    description=f'''Transfer strategy funds from funding wallet to {wallet} wallet.
-                                Strategy {self._strategy.strategy_name}, Instance: {self._strategy.strategy_instance}''',
+                    description=f'Transfer strategy funds from funding wallet to {wallet} wallet. \
+                    Strategy {self._strategy.strategy_name}, Instance: {self._strategy.strategy_instance}',
                     asset=base_currency,
                     amount=self._allocated_capital.variable,
                     from_wallet=BinanceStrategyManager.FUNDING_WALLET,
@@ -42,7 +42,7 @@ class BinanceStrategyManager(StrategyManager):
         base_currency = self._strategy.strategy_instance_config.get(BinanceStrategyManager.CONFIG_KEY_BASE_CURRENCY)
 
         await TransferAlgorithm(
-            None,
+            self._capital_flow,
             self._strategy.request_data_id,
             [
                 Command(

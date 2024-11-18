@@ -53,6 +53,8 @@ class StrategyManager:
         execution_status = StrategyExecutionStatus.RETURN_FUNDS
         exception_cache = None
 
+        self._strategy.allocated_capital = self._allocated_capital
+
         try:
             if not self._should_trade_strategy():
                 return
@@ -67,17 +69,23 @@ class StrategyManager:
 
             execution_status: StrategyExecutionStatus = await self._strategy.execute()
 
+        except Exception as exc:
+            logging.error('Exception occurred. Disabling strategy.')
+            self._strategy.strategy_instance_config.set(self.CONFIG_KEY_IS_ACTIVE, False)
+            exception_cache = exc
+
+        try:
             if execution_status == StrategyExecutionStatus.RETURN_FUNDS:
                 await self._maybe_transfer_capital_from_strategy()
 
         except Exception as exc:
-            self._strategy.strategy_instance_config.set(self.CONFIG_KEY_IS_ACTIVE, False)
-            exception_cache = exc
+            logging.critical('Failed transferring money out of strategy. Disabling strategy.')
+            logging.exception('Previously another exception occurred.', exc_info=exception_cache)
+            raise exc
 
-        if execution_status == StrategyExecutionStatus.RETURN_FUNDS:
-            await self._maybe_transfer_capital_from_strategy()
+        finally:
+            self._update_strategy_config()
 
-        self._update_strategy_config()
         if exception_cache:
             raise exception_cache
 

@@ -5,6 +5,7 @@ from typing import Any, Dict
 from mirage.config.config_manager import ConfigManager
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.utils.mirage_dict import MirageDict
+from mirage.utils.variable_reference import VariableReference
 
 
 class StrategyException(Exception):
@@ -30,8 +31,9 @@ class Strategy:
 
         self.strategy_instance_config = ConfigManager.fetch_strategy_instance_config(self.strategy_name, self.strategy_instance)
 
-        self.strategy_capital = None
-        self.capital_flow = None
+        self.allocated_capital: VariableReference = None
+        self.strategy_capital: VariableReference = None
+        self.capital_flow: VariableReference = None
 
     @abstractmethod
     async def should_execute_strategy(self) -> bool:

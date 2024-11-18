@@ -1,9 +1,10 @@
 import asyncio
-from asyncio import subprocess
+import os
 from pathlib import Path
 import platform
 import signal
 import logging
+import subprocess
 
 from mirage.config.config_manager import ConfigManager
 from mirage.jobs.mirage_job_manager import MirageJobManager
@@ -75,7 +76,7 @@ async def main():
     await mirage_nexus.shutdown()
 
     if ConfigManager.execution_config.get(consts.EXECUTION_CONFIG_KEY_UPDATE):
-        await _update_mirage()
+        await update_mirage()
 
 
 def _check_termination_flag():
@@ -86,9 +87,17 @@ def _check_termination_flag():
         shutdown_flag = True
 
 
-async def _update_mirage():
+async def update_mirage():
     await run_command_async('git pull origin ' + consts.MIRAGE_MAIN_BRANCH)
-    subprocess.run(["python", __file__], check=False)
+    subprocess.run([get_python_exe(), __file__], check=False)
+
+
+def get_python_exe():
+    venv_path = os.path.join(os.getcwd(), ".venv")
+    if platform.system() == consts.PLATFORM_NAME_WINDOWS:
+        return os.path.join(venv_path, "Scripts", "python.exe")
+
+    return os.path.join(venv_path, "bin", "python")
 
 
 if __name__ == '__main__':

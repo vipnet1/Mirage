@@ -59,7 +59,7 @@ async def main():
     signal.signal(signal.SIGINT, signal_handler)
 
     job_manager = MirageJobManager([
-        SelfUpdateJob(5)
+        SelfUpdateJob(60)
     ])
 
     logging.info('Main loop running')

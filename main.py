@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import subprocess
 from pathlib import Path
 import platform
 import signal
@@ -9,6 +10,7 @@ from mirage.jobs.mirage_job_manager import MirageJobManager
 from mirage.jobs.self_update.self_update_job import SelfUpdateJob
 from mirage.mirage_nexus import MirageNexus
 from mirage.logging.logging_config import configure_logger
+from mirage.utils.command_utils import run_command_async
 from mirage.utils.mirage_imports import import_package
 import consts
 
@@ -72,6 +74,9 @@ async def main():
     logging.info('Calling nexus shutdown')
     await mirage_nexus.shutdown()
 
+    if ConfigManager.execution_config.get(consts.EXECUTION_CONFIG_KEY_UPDATE):
+        await _update_mirage()
+
 
 def _check_termination_flag():
     global shutdown_flag
@@ -79,6 +84,11 @@ def _check_termination_flag():
     if ConfigManager.execution_config.get(consts.EXECUTION_CONFIG_KEY_TERMINATE):
         logging.info('Beginning termination process - flag set.')
         shutdown_flag = True
+
+
+async def _update_mirage():
+    await run_command_async('git pull origin ' + consts.MIRAGE_MAIN_BRANCH)
+    subprocess.run(["python", __file__], check=False)
 
 
 if __name__ == '__main__':

@@ -40,11 +40,17 @@ def bootstrap():
     configure_logger()
 
 
+def print_version():
+    with open("VERSION", "r") as f:
+        version = f.read().strip()
+
+    logging.info('Mirage starting. Version: %s', version)
+
+
 def signal_handler(sig, frame):
     """
     Can be called twice during same termination, once because of CTRL+C and once because of tradingview channel stop()
     """
-
     global shutdown_flag
 
     shutdown_flag = True
@@ -53,6 +59,8 @@ def signal_handler(sig, frame):
 
 async def main():
     global shutdown_flag
+
+    print_version()
 
     mirage_nexus = MirageNexus()
     await mirage_nexus.bootstrap()

@@ -21,7 +21,7 @@ class BuyBtc(Strategy):
                     wallet=SimpleOrderAlgorithm.WALLET_SPOT,
                     type=SimpleOrderAlgorithm.TYPE_MARKET,
                     symbol='BTC/USDT',
-                    operation=SimpleOrderAlgorithm.OPERATION_SELL,
+                    operation=SimpleOrderAlgorithm.OPERATION_BUY,
                     cost=8,
                     price=None
                 )

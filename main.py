@@ -89,9 +89,7 @@ def _check_termination_flag():
 
 async def update_mirage():
     await run_command_async('git pull origin ' + consts.MIRAGE_MAIN_BRANCH)
-    print('yey1')
     subprocess.run([get_python_exe(), __file__], check=False)
-    print('yey2')
 
 
 def get_python_exe():

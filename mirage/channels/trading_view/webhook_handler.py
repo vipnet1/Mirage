@@ -23,7 +23,7 @@ class WebhookHandler:
         self._request_json = RequestJson(request_data)
 
     async def process_request(self):
-        logging.debug('Received webhook data: %s', self._request_json.raw_dict)
+        logging.info('Received webhook data: %s', self._request_json.raw_dict)
 
         if ConfigManager.execution_config.get(consts.EXECUTION_CONFIG_KEY_SUSPEND):
             logging.warning('Mirage suspent, ignoring request.')

@@ -12,4 +12,3 @@ Need to have:
 - mongorestore PATH_TO_MONGODUMP_FOLDER
 
 The mongorestore is smart - if db exist it will insert the differences.
-y

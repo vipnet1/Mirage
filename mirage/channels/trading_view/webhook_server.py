@@ -37,7 +37,9 @@ class WebhookServer:
             uvicorn.Config(
                 self.app,
                 host=consts.WEBHOOK_SERVER_HOST,
-                port=consts.WEBHOOK_SERVER_PORT
+                port=consts.WEBHOOK_SERVER_PORT,
+                ssl_keyfile=consts.SSL_KEYFILE,
+                ssl_certfile=consts.SSL_CERTFILE
             )
         )
         await server.serve()

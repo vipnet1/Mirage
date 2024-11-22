@@ -25,13 +25,15 @@ STRATEGY_MODULE_PREFIX = 'mirage.strategy'
 STRATEGY_MANAGER_MODULE_PREFIX = 'mirage.strategy_manager'
 
 WEBHOOK_SERVER_HOST = '0.0.0.0'
-WEBHOOK_SERVER_PORT = 80
+WEBHOOK_SERVER_PORT = 443
 WEBHOOK_SERVER_ENDPOINT = '/tradingview_webhook'
 
 LOGGING_LEVEL = logging.INFO
 # Let's have up to 1GB of logs for single run.
 LOGGING_BACKUP_COUNT = 100
 LOGGING_MAX_BYTES = 5000000  # 5MB
+SSL_KEYFILE = '.config/certificates/private.key'
+SSL_CERTFILE = '.config/certificates/certificate.crt'
 
 PLATFORM_NAME_WINDOWS = 'Windows'
 

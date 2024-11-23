@@ -27,6 +27,7 @@ STRATEGY_MANAGER_MODULE_PREFIX = 'mirage.strategy_manager'
 WEBHOOK_SERVER_HOST = '0.0.0.0'
 WEBHOOK_SERVER_PORT = 443
 WEBHOOK_SERVER_ENDPOINT = '/tradingview_webhook'
+REQUESTS_PER_MINUTE = 15
 
 LOGGING_LEVEL = logging.INFO
 # Let's have up to 1GB of logs for single run.

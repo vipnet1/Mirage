@@ -43,6 +43,11 @@ async def _process_webhook(request_data) -> dict[str, any]:
 
 
 class WebhookServer:
+    KEY_HOST = 'channels.tradingview.host'
+    KEY_PORT = 'channels.tradingview.port'
+    KEY_SSL_KEYFILE = 'channels.tradingview.ssl_keyfile'
+    KEY_SSL_CERTFILE = 'channels.tradingview.ssl_certfile'
+
     def __init__(self):
         self.app = FastAPI()
         self.app.state.limiter = Limiter(key_func=get_remote_address, default_limits=[f'{consts.REQUESTS_PER_MINUTE}/minute'])
@@ -59,10 +64,10 @@ class WebhookServer:
         server = uvicorn.Server(
             uvicorn.Config(
                 self.app,
-                host=consts.WEBHOOK_SERVER_HOST,
-                port=consts.WEBHOOK_SERVER_PORT,
-                ssl_keyfile=consts.SSL_KEYFILE,
-                ssl_certfile=consts.SSL_CERTFILE
+                host=ConfigManager.config.get(self.KEY_HOST),
+                port=ConfigManager.config.get(self.KEY_PORT),
+                ssl_keyfile=ConfigManager.config.get(self.KEY_SSL_KEYFILE),
+                ssl_certfile=ConfigManager.config.get(self.KEY_SSL_CERTFILE)
             )
         )
         await server.serve()

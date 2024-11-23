@@ -10,26 +10,34 @@ class ConfigLoadException(Exception):
     pass
 
 
+def get_config_environment():
+    return Path(consts.CONFIG_ENVIRONMENTS_FOLDER) / consts.SELECTED_ENVIRONMENT
+
+
+def _get_environment_strategies_config():
+    return get_config_environment() / consts.STRATEGIES_CONFIG_FOLDER_NAME
+
+
 def _save_config(config: Config, config_filepth: Path) -> None:
     with open(str(config_filepth), 'w') as file:
         json.dump(config.raw_dict, file, indent=4)
 
 
 def _iterate_strategy_configs() -> Iterator[tuple[Path, dict]]:
-    for file_path in Path(consts.STRATEGIES_CONFIG_FOLDER).rglob("*.json"):
+    for file_path in _get_environment_strategies_config().rglob("*.json"):
         with file_path.open('r') as file:
             data = json.load(file)
             yield file_path, data
 
 
 def _create_strategy_config(strategy_name: str, strategy_instance: str):
-    strategy_instance_config = Path(consts.STRATEGIES_CONFIG_FOLDER) / strategy_name / f'{strategy_instance}.json'
+    strategy_instance_config = _get_environment_strategies_config() / strategy_name / f'{strategy_instance}.json'
     strategy_instance_config.parent.mkdir(parents=True, exist_ok=True)
     strategy_instance_config.touch()
 
 
 def _get_strategy_config_path(strategy_name: str, strategy_instance: str) -> Path:
-    strategy_configs_folder = Path(consts.STRATEGIES_CONFIG_FOLDER) / strategy_name
+    strategy_configs_folder = _get_environment_strategies_config() / strategy_name
 
     if not strategy_configs_folder.exists():
         raise ConfigLoadException(f'Strategy configs folder {str(strategy_configs_folder)} not exists.')
@@ -63,7 +71,7 @@ class ConfigManager:
 
     @staticmethod
     def load_main_config() -> None:
-        ConfigManager.config = ConfigManager.load_config_file(Path(consts.CONFIG_FOLDER) / consts.MAIN_CONFIG_FILENAME, 'Main config')
+        ConfigManager.config = ConfigManager.load_config_file(get_config_environment() / consts.MAIN_CONFIG_FILENAME, 'Main config')
 
     @staticmethod
     def load_config_file(config_path: Path, config_name: str) -> Config:
@@ -91,7 +99,7 @@ class ConfigManager:
     @staticmethod
     def update_main_config(config_update: Config) -> None:
         ConfigManager.config.raw_dict.update(config_update.raw_dict)
-        _save_config(ConfigManager.config, Path(consts.CONFIG_FOLDER) / consts.MAIN_CONFIG_FILENAME)
+        _save_config(ConfigManager.config, get_config_environment() / consts.MAIN_CONFIG_FILENAME)
 
     @staticmethod
     def update_execution_config(config_update: Config) -> None:
@@ -106,7 +114,7 @@ class ConfigManager:
     @staticmethod
     def override_main_config(config_override: Config) -> None:
         ConfigManager.config = Config(config_override.raw_dict, ConfigManager.config.config_name)
-        _save_config(ConfigManager.config, Path(consts.CONFIG_FOLDER) / consts.MAIN_CONFIG_FILENAME)
+        _save_config(ConfigManager.config, get_config_environment() / consts.MAIN_CONFIG_FILENAME)
 
     @staticmethod
     def override_strategy_config(config_override: Config, strategy_name: str, strategy_instance: str) -> None:

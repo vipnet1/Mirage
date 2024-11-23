@@ -28,9 +28,16 @@ def os_config():
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
+def _create_config_folders():
+    for environment in consts.ENVIRONMENTS:
+        env_config_path = Path(consts.CONFIG_ENVIRONMENTS_FOLDER) / environment
+        strategies_config_path = env_config_path / consts.STRATEGIES_CONFIG_FOLDER_NAME
+        env_config_path.mkdir(parents=True, exist_ok=True)
+        strategies_config_path.mkdir(parents=True, exist_ok=True)
+
+
 def create_folders():
-    Path(consts.CONFIG_FOLDER).mkdir(parents=True, exist_ok=True)
-    Path(consts.STRATEGIES_CONFIG_FOLDER).mkdir(parents=True, exist_ok=True)
+    _create_config_folders()
     Path(consts.LOG_FOLDER).mkdir(parents=True, exist_ok=True)
 
 

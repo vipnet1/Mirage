@@ -1,5 +1,8 @@
 import logging
 
+ENVIRONMENTS = ['prod', 'dev']
+SELECTED_ENVIRONMENT = 'prod'
+
 CHANNEL_TELEGRAM = 'telegram'
 CHANNEL_TRADING_VIEW = 'trading_view'
 
@@ -8,7 +11,8 @@ MAIN_CONFIG_FILENAME = 'config.json'
 DRIVE_SERVICE_ACCOUNT_FILENAME = 'drive_service_account.json'
 
 CONFIG_FOLDER = '.config'
-STRATEGIES_CONFIG_FOLDER = f'{CONFIG_FOLDER}/strategies'
+CONFIG_ENVIRONMENTS_FOLDER = f'{CONFIG_FOLDER}/environments'
+STRATEGIES_CONFIG_FOLDER_NAME = 'strategies'
 LOG_FOLDER = '.logs'
 
 DB_NAME_HISTORY = 'history'
@@ -24,8 +28,6 @@ RECORD_KEY_UPDATED_AT = 'updated_at'
 STRATEGY_MODULE_PREFIX = 'mirage.strategy'
 STRATEGY_MANAGER_MODULE_PREFIX = 'mirage.strategy_manager'
 
-WEBHOOK_SERVER_HOST = '0.0.0.0'
-WEBHOOK_SERVER_PORT = 443
 WEBHOOK_SERVER_ENDPOINT = '/tradingview_webhook'
 REQUESTS_PER_MINUTE = 15
 
@@ -33,8 +35,6 @@ LOGGING_LEVEL = logging.INFO
 # Let's have up to 1GB of logs for single run.
 LOGGING_BACKUP_COUNT = 100
 LOGGING_MAX_BYTES = 5000000  # 5MB
-SSL_KEYFILE = '.config/certificates/private.key'
-SSL_CERTFILE = '.config/certificates/certificate.crt'
 
 PLATFORM_NAME_WINDOWS = 'Windows'
 

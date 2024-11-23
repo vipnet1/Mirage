@@ -3,7 +3,7 @@ from googleapiclient.discovery import build
 from google.oauth2 import service_account
 
 import consts
-from mirage.config.config_manager import ConfigManager
+from mirage.config.config_manager import ConfigManager, get_config_environment
 
 
 class DriveApi:
@@ -11,11 +11,11 @@ class DriveApi:
 
     def __init__(self):
         self._scopes = ['https://www.googleapis.com/auth/drive']
-        self._service_account_file = f'{consts.CONFIG_FOLDER}/{consts.DRIVE_SERVICE_ACCOUNT_FILENAME}'
+        self._service_account_file = get_config_environment() / consts.DRIVE_SERVICE_ACCOUNT_FILENAME
         self._mirage_folder_id = ConfigManager.config.get(DriveApi.KEY_MIRAGE_FOLDER_ID)
 
     def _authenticate(self):
-        return service_account.Credentials.from_service_account_file(self._service_account_file, scopes=self._scopes)
+        return service_account.Credentials.from_service_account_file(str(self._service_account_file), scopes=self._scopes)
 
     def upload_file(self, file_path: Path):
         creds = self._authenticate()

@@ -32,7 +32,6 @@ WEBHOOK_SERVER_ENDPOINT = '/tradingview_webhook'
 REQUESTS_PER_MINUTE = 15
 
 LOGGING_LEVEL = logging.INFO
-# Let's have up to 1GB of logs for single run.
 LOGGING_BACKUP_COUNT = 100
 LOGGING_MAX_BYTES = 5000000  # 5MB
 

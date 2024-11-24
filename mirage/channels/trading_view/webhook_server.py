@@ -1,7 +1,9 @@
 import asyncio
+import copy
 import logging
 import traceback
 import uvicorn
+import uvicorn.config
 from fastapi import FastAPI, HTTPException, Request
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -67,7 +69,17 @@ class WebhookServer:
                 host=ConfigManager.config.get(self.KEY_HOST),
                 port=ConfigManager.config.get(self.KEY_PORT),
                 ssl_keyfile=ConfigManager.config.get(self.KEY_SSL_KEYFILE),
-                ssl_certfile=ConfigManager.config.get(self.KEY_SSL_CERTFILE)
+                ssl_certfile=ConfigManager.config.get(self.KEY_SSL_CERTFILE),
+                log_config=self._get_logging_config()
             )
         )
         await server.serve()
+
+    def _get_logging_config(self):
+        config = copy.deepcopy(uvicorn.config.LOGGING_CONFIG)
+
+        loggers = config['loggers']
+        for logger_name in loggers:
+            logger = loggers[logger_name]
+            logger['propagate'] = True
+            logger['handlers'] = []

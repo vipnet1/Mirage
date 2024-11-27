@@ -1,18 +1,13 @@
 from datetime import datetime, timedelta, timezone
 import logging
 import traceback
-from typing import Dict
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes
 import consts
 from mirage.channels.channels_manager import ChannelsManager
 from mirage.channels.communication_channel import CommunicationChannel
-from mirage.channels.telegram.commands.backup import BackupCommand
-from mirage.channels.telegram.commands.override_config import OverrideConfigCommand
-from mirage.channels.telegram.commands.show_config import ShowConfigCommand
-from mirage.channels.telegram.commands.update_config import UpdateConfigCommand
 from mirage.channels.telegram.exceptions import MirageTelegramException
-from mirage.channels.telegram.telegram_aliases import TelegramAliases
+from mirage.channels.telegram.commands import enabled_commands, enabled_aliases
 from mirage.channels.telegram.telegram_command import TelegramCommand
 from mirage.config.config_manager import ConfigManager
 
@@ -32,19 +27,15 @@ async def _handle_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     ChannelsManager.channels[consts.CHANNEL_TELEGRAM].active_operations.variable += 1
 
-    available_commands = [ShowConfigCommand, UpdateConfigCommand, OverrideConfigCommand, BackupCommand]
-    commands_name_to_class = {cmd.COMMAND_NAME: cmd for cmd in available_commands}
-
     try:
         _verify_command_timeout(update)
-        command_class, command_text = _get_command_class(update, commands_name_to_class)
+        command_class, command_text = _get_command_class(update)
         command_object = command_class(command_text, update, context)
         await command_object.execute()
 
     except InvalidTelegramCommandException:
-        telegram_aliases = TelegramAliases()
         await ChannelsManager.get_communication_channel().send_message(
-            f'Available commands:\n {list(commands_name_to_class.keys()) + list(telegram_aliases.aliases.keys())}'
+            f'Available commands:\n {list(enabled_commands.keys()) + list(enabled_aliases.keys())}'
         )
 
     except Exception as exc:
@@ -60,19 +51,18 @@ def _verify_command_timeout(update: Update) -> None:
         raise TelegramCommandTimeoutException(f'More than {consts.IGNORE_TELEGRAM_COMMANDS_AFTER_SECONDS} seconds passed. Ignoring command.')
 
 
-def _get_command_class(update: Update, commands_name_to_class: Dict[str, TelegramCommand], alias: str = None) -> tuple[type[TelegramCommand], str]:
+def _get_command_class(update: Update, alias: str = None) -> tuple[type[TelegramCommand], str]:
     text = alias if alias is not None else update.message.text
     command = text.splitlines()[0]
 
-    if command in commands_name_to_class:
-        return commands_name_to_class[command], text
+    if command in enabled_commands:
+        return enabled_commands[command], text
 
-    telegram_aliases = TelegramAliases()
-    if command not in telegram_aliases.aliases:
+    if command not in enabled_aliases:
         raise InvalidTelegramCommandException(f'Invalid telegram command: {command}')
 
-    alias = telegram_aliases.aliases[command]
-    command_class, _ = _get_command_class(update, commands_name_to_class, alias)
+    alias = enabled_aliases[command]
+    command_class, _ = _get_command_class(update, alias)
     return command_class, alias
 
 

@@ -1,10 +1,16 @@
 import asyncio
 from mirage.jobs.mirage_job import MirageJob
+from mirage.jobs import enabled_jobs
+
+
+class JobManagerException(Exception):
+    pass
 
 
 class MirageJobManager:
     def __init__(self, jobs: list[MirageJob]):
         self._jobs = jobs
+        self._validate_jobs_enabled()
 
     def tick(self, seconds: int):
         for job in self._jobs:
@@ -28,3 +34,9 @@ class MirageJobManager:
                 if job.is_running:
                     job_running = True
                     break
+
+    def _validate_jobs_enabled(self):
+        for job in self._jobs:
+            job_type = type(job)
+            if job_type not in enabled_jobs:
+                raise JobManagerException(f'Job {job_type} is not enabled.')

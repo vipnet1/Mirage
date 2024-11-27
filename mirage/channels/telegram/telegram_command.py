@@ -6,8 +6,6 @@ from telegram.ext import ContextTypes
 class TelegramCommand:
     __metaclass__ = ABCMeta
 
-    COMMAND_NAME = ''
-
     def __init__(self, message: str, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
         Use message for command and not update.message.text because of aliases

@@ -6,7 +6,6 @@ from mirage.config.config_manager import ConfigManager
 
 
 class UpdateConfigCommand(TelegramCommand):
-    COMMAND_NAME = 'update-config'
     CONFIG_NAME_MAIN = 'main'
     CONFIG_NAME_EXECUTION = 'execution'
     CONFIG_NAME_STRATEGY = 'strategy'

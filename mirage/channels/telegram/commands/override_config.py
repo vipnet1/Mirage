@@ -6,7 +6,6 @@ from mirage.config.config_manager import ConfigManager
 
 
 class OverrideConfigCommand(TelegramCommand):
-    COMMAND_NAME = 'override-config'
     CONFIG_NAME_MAIN = 'main'
     CONFIG_NAME_STRATEGY = 'strategy'
 

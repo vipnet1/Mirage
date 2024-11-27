@@ -20,20 +20,21 @@ But as humans make mistakes, and accidently may send http message. we need a way
 ## Mirage Protection ##
 To fulfill our protection requirements, we built multiple server validation algorithms.
 
-### Xor HmacSha256 & Replay Protection ###
+### Xor HmacSha256 & Replay Protectio ###
 As we need to do the encryption operations in tradingview pinescript, we are pretty limited, so we use whatever we can.
 - We generate 3(or more) Xor keys, each of random size 32-64 characters.
 - We generate secret 64 characters key.
 
 The algorithm is as following:
-- Generate nonce. Put it inside the message body.
+- Generate nonce, current UNIX format time. Put it inside a message containing the nonce, time and the body to send.
 - Apply HmacSha256 with the secret key to the message. Put the result alongsize the message.
-- Encrypt the message using 3 Xor keys. Each xor applied to previous xor result.
+- Encrypt the whole request using 3 Xor keys. Each xor applied to previous xor result.
 
 On Mirage size we:
 - Decrypt the whole content using 3 xor keys.
 - Check if HmacSha256 on body with secret key indeed matches the hash provided by the client.
 - Check if message with that nonce already received. If not insert it to database. If yes ignore request.
+- Check if message isn't expired according to time field.
 
 In this case we achieve:
 - Authentication. Only we know the secret key. Integrity test will fail for others.
@@ -53,8 +54,9 @@ Now we will focus on how to recover. Let's suppose we send http request accident
 ### If we use Xor HmacSha256 ###
 Mirage will reject the http request, but malicious actor can see the contents, and take it and try to embed it in https request.
 He won't be able to understand the data, or change it. But he can send the request to Mirage once and the server will accept it.
-He can send the request only once, whenever he wants, until you terminate Mirage & change the secret key.
-The only risk here that he cn send the request you already wanted to send, on unknown for you time until you close that opportunity for him.
+He can send the request only once, whenever he wants, until you terminate Mirage & change the secret key. That's why we added
+expiration to the messages to shorten this window.
+The only risk here that he can send the request you already wanted to send, on unknown for you time until you or Mirage close that opportunity for him.
 
 In this case, you should terminate Mirage, change the secret key used for HmacSha256 on tradingview & mirage configuration.
 

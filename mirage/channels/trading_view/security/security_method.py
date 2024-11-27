@@ -1,6 +1,7 @@
 
 from abc import ABCMeta, abstractmethod
 from fastapi import Request
+from uvicorn import Config
 
 
 class SecurityMethodException(Exception):
@@ -10,14 +11,13 @@ class SecurityMethodException(Exception):
 class SecurityMethod:
     __metaclass__ = ABCMeta
 
-    name = ''
-
-    def __init__(self, request: Request):
+    def __init__(self, request: Request, method_config: Config):
         self._request = request
+        self._method_config = method_config
 
-    def perform_validation(self):
+    async def perform_validation(self) -> dict[str, any]:
         try:
-            self._perform_validation_internal()
+            return await self._perform_validation_internal()
 
         except SecurityMethodException as exc:
             raise exc
@@ -25,5 +25,5 @@ class SecurityMethod:
             raise SecurityMethodException() from exc
 
     @abstractmethod
-    def _perform_validation_internal(self):
+    async def _perform_validation_internal(self) -> dict[str, any]:
         raise NotImplementedError()

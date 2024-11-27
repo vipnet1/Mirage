@@ -11,17 +11,16 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi.errors import RateLimitExceeded
 import consts
 from mirage.channels.channels_manager import ChannelsManager
-from mirage.channels.trading_view.request_authentication import RequestAuthentication, RequestAuthenticationException
+from mirage.channels.trading_view.security.security_manager import SecurityManager
 from mirage.channels.trading_view.webhook_handler import WebhookHandler
 from mirage.config.config_manager import ConfigManager
 
 
 async def _authenticate(request: Request) -> dict[str, any]:
     try:
-        authentication = RequestAuthentication(request)
-        return await authentication.authenticate()
+        return await SecurityManager(request).perform_security_validation()
 
-    except RequestAuthenticationException:
+    except Exception:
         # pylint: disable=raise-missing-from
         raise HTTPException(status_code=401, detail="Unauthorized")
 

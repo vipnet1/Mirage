@@ -3,7 +3,7 @@ from typing import Dict
 import consts
 from mirage.channels.channel import Channel
 from mirage.channels.communication_channel import CommunicationChannel
-from mirage.utils.mirage_imports import import_object
+from mirage.channels import enabled_channels
 
 
 class ChannelsManagerException(Exception):
@@ -24,8 +24,6 @@ class ChannelsManager:
         if name in ChannelsManager.channels:
             raise ChannelsManagerException(f'Channel with name {name} already exists.')
 
-        # To void circular import
-        enabled_channels = import_object('mirage.channels', 'enabled_channels')
         if name not in enabled_channels:
             raise ChannelsManagerException(f'Channel {name} is disabled')
 

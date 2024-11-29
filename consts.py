@@ -1,7 +1,7 @@
 import logging
 
 ENVIRONMENTS = ['prod', 'dev']
-SELECTED_ENVIRONMENT = 'prod'
+SELECTED_ENVIRONMENT = 'dev'
 
 CHANNEL_TELEGRAM = 'telegram'
 CHANNEL_TRADING_VIEW = 'trading_view'
@@ -21,6 +21,9 @@ COLLECTION_BROKER_RESPONSE = 'broker_response'
 
 DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING = 'strategy_crypto_pair_trading'
 COLLECTION_POSITION_INFO = 'position_info'
+
+DB_NAME_MIRAGE_SECURITY = 'mirage_security'
+COLLECTION_REQUEST_NONCES = 'request_nonces'
 
 RECORD_KEY_CREATED_AT = 'created_at'
 RECORD_KEY_UPDATED_AT = 'updated_at'
@@ -44,3 +47,5 @@ EXECUTION_CONFIG_KEY_TERMINATE = 'terminate'
 EXECUTION_CONFIG_KEY_UPDATE = 'update'
 
 MIRAGE_MAIN_BRANCH = 'main'
+
+MIRAGE_SECURITY_REQUEST_EXPIRATION = 30

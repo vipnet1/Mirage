@@ -1,0 +1,27 @@
+{
+    "request": {
+        "data": "56,98,12,54" # of course will be more encrypted data
+    }
+}
+
+after decrypting data using xors:
+{
+    "decrypted_data": {
+        "message": "{\"message\":{\"body\":{\"test\":5,\"test2\":\"dfgf\"},\"nonce\":\"Tcb6DOxyJR\",\"timenow\":1732873606550}}",
+        "hash": "aU4n2jfinamHiksin374msK"
+    }
+}
+
+after converting message to json:
+{
+    "message": {
+        "content": {
+            body: {
+                "test: 5,
+                "test2": "dfgf"
+            }
+        },
+        "nonce": "rKfO2e1O5P",
+        "timenow": 1732872406438
+    }
+}

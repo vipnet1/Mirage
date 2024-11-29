@@ -1,7 +1,7 @@
-from mirage.channels.trading_view.security.security_method import SecurityMethod
+from mirage.channels.trading_view.security.security_method import SecurityMethod, SecurityMethodException
 
 
-class ApiKeyException(Exception):
+class ApiKeyException(SecurityMethodException):
     pass
 
 

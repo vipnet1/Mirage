@@ -1,15 +1,12 @@
-from typing import Dict, Any
-
-
 class MirageDictException(Exception):
     pass
 
 
 class MirageDict:
-    def __init__(self, raw_dict: Dict[str, Any]):
+    def __init__(self, raw_dict: dict[str, any]):
         self.raw_dict = raw_dict
 
-    def get(self, key: str, default_value: Any = None) -> Any:
+    def get(self, key: str, default_value: any = None) -> any:
         splitted_key = key.split('.')
         value = self.raw_dict
         for part in splitted_key:
@@ -23,7 +20,7 @@ class MirageDict:
 
         return value
 
-    def set(self, key: str, set_value: Any) -> None:
+    def set(self, key: str, set_value: any) -> None:
         splitted_key = key.split('.')
         till_parent = splitted_key[:-1]
         last_key = splitted_key[-1]
@@ -37,5 +34,5 @@ class MirageDict:
 
         value[last_key] = set_value
 
-    def validate_key_exists(self, key: str):
+    def validate_key_exists(self, key: str) -> None:
         self.get(key)

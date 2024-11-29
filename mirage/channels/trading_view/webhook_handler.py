@@ -1,5 +1,4 @@
 import logging
-from typing import Any, Dict
 import consts
 
 from mirage.channels.trading_view.exceptions import WebhookRequestException
@@ -18,10 +17,10 @@ class WebhookHandler:
     KEY_STRATEGY_INSTANCE_ID = 'strategy.instance_id'
     KEY_DATA = 'data'
 
-    def __init__(self, request_data: Dict[str, Any]):
+    def __init__(self, request_data: dict[str, any]):
         self._request_json = RequestJson(request_data)
 
-    async def process_request(self):
+    async def process_request(self) -> None:
         logging.info('Received webhook data: %s', self._request_json.raw_dict)
 
         if ConfigManager.execution_config.get(consts.EXECUTION_CONFIG_KEY_SUSPEND):

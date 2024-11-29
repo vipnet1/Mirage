@@ -29,11 +29,11 @@ class OverrideConfigCommand(TelegramCommand):
 
         await self._context.bot.send_message(self._update.effective_chat.id, 'Done!')
 
-    def _override_main_config(self):
+    def _override_main_config(self) -> None:
         config_override = Config(json.loads(self._clean_text), 'Override main config')
         ConfigManager.override_main_config(config_override)
 
-    def _override_strategy_config(self):
+    def _override_strategy_config(self) -> None:
         strategy_name = self._get_top_line()
         if not strategy_name:
             raise MirageTelegramException('Must provide strategy name')

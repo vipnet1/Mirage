@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod
 import logging
-from typing import Any, Dict
 
 from mirage.config.config_manager import ConfigManager
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
@@ -20,7 +19,7 @@ class Strategy:
     def __init__(
             self,
             request_data_id: str,
-            strategy_data: Dict[str, Any],
+            strategy_data: dict[str, any],
             strategy_name: str,
             strategy_instance: str,
     ):

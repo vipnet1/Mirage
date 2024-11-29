@@ -11,9 +11,9 @@ class MirageJob:
         self.is_running = False
 
     @abstractmethod
-    async def execute(self):
+    async def execute(self) -> None:
         raise NotImplementedError()
 
-    def _reset_job(self):
+    def _reset_job(self) -> None:
         self.is_running = False
         self.execution_time = self.interval

@@ -1,6 +1,7 @@
 
 from dataclasses import dataclass
 import logging
+from ccxt.base.types import TransferEntry
 from mirage.algorithm.mirage_algorithm import CommandBase, MirageAlgorithm
 from mirage.brokers.binance.binance import Binance
 
@@ -20,14 +21,14 @@ class Command(CommandBase):
 class TransferAlgorithm(MirageAlgorithm):
     description = 'Transfer funds between wallets in Binance'
 
-    async def _process_command(self, command: dataclass):
+    async def _process_command(self, command: dataclass) -> None:
         if not isinstance(command, Command):
             raise TransferAlgorithmException(f'Unknown {self.__class__.__name__} command')
 
         order = await self._transfer_funds(command)
         self.command_results.append(order)
 
-    async def _transfer_funds(self, command: Command):
+    async def _transfer_funds(self, command: Command) -> TransferEntry:
         binance = Binance()
         async with binance.exchange:
             logging.info(

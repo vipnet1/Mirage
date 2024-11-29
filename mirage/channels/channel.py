@@ -10,9 +10,9 @@ class Channel:
         self.active_operations = VariableReference(0)
 
     @abstractmethod
-    async def start(self):
+    async def start(self) -> None:
         raise NotImplementedError()
 
     @abstractmethod
-    async def stop(self):
+    async def stop(self) -> None:
         raise NotImplementedError()

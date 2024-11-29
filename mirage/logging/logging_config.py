@@ -6,7 +6,7 @@ import time
 import consts
 
 
-def configure_logger():
+def configure_logger() -> None:
     root_logger = logging.getLogger()
     root_logger.setLevel(consts.LOGGING_LEVEL)
 
@@ -26,7 +26,7 @@ def configure_logger():
     root_logger.addHandler(file_handler)
 
 
-def _logging_filter(record: logging.LogRecord):
+def _logging_filter(record: logging.LogRecord) -> bool:
     message = record.getMessage()
     if 'HTTP Request: POST https://api.telegram.org/bot' in message:
         return False

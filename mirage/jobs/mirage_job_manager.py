@@ -12,7 +12,7 @@ class MirageJobManager:
         self._jobs = jobs
         self._validate_jobs_enabled()
 
-    def tick(self, seconds: int):
+    def tick(self, seconds: int) -> None:
         for job in self._jobs:
             if job.is_running:
                 continue
@@ -25,7 +25,7 @@ class MirageJobManager:
             job.is_running = True
             asyncio.create_task(job.execute())
 
-    async def wait_jobs_complete(self):
+    async def wait_jobs_complete(self) -> None:
         job_running = True
         while job_running:
             await asyncio.sleep(1)
@@ -35,7 +35,7 @@ class MirageJobManager:
                     job_running = True
                     break
 
-    def _validate_jobs_enabled(self):
+    def _validate_jobs_enabled(self) -> None:
         for job in self._jobs:
             job_type = type(job)
             if job_type not in enabled_jobs:

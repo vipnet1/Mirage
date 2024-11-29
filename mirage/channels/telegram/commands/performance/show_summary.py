@@ -14,7 +14,7 @@ class PerformaceSummaryCommand(TelegramCommand):
     RECORDS_COUNT = 'records_count'
     TOTAL_PROFIT = 'total_profit'
     TOTAL_CAPITAL = 'total_capital'
-    AVERAGE_PROFIT = 'average_capital'
+    AVERAGE_PROFIT = 'average_profit'
     AVERAGE_CAPITAL = 'average_capital'
 
     async def execute(self) -> None:
@@ -25,7 +25,7 @@ class PerformaceSummaryCommand(TelegramCommand):
         results_for_csv = self._generate_results_for_csv(performance_summary)
         await self._send_results_csv(results_for_csv)
 
-    def _create_totals_summary(self, records):
+    def _create_totals_summary(self, records) -> dict[str, any]:
         performance_summary = {}
         for record in records:
             db_trade_performance = DbTradePerformance(**record)
@@ -55,7 +55,7 @@ class PerformaceSummaryCommand(TelegramCommand):
         instance_info[self.TOTAL_PROFIT] += db_trade_performance.profit
         instance_info[self.TOTAL_CAPITAL] += db_trade_performance.available_capital
 
-    def _generate_results_for_csv(self, performance_summary: dict[str, any]):
+    def _generate_results_for_csv(self, performance_summary: dict[str, any]) -> list[dict[str, any]]:
         results = []
 
         for strategy in performance_summary:
@@ -69,11 +69,11 @@ class PerformaceSummaryCommand(TelegramCommand):
 
         return results
 
-    def _populate_averages(self, data: dict[str, any]):
+    def _populate_averages(self, data: dict[str, any]) -> None:
         data[self.AVERAGE_PROFIT] = data[self.TOTAL_PROFIT] / data[self.RECORDS_COUNT]
         data[self.AVERAGE_PROFIT] = data[self.TOTAL_CAPITAL] / data[self.RECORDS_COUNT]
 
-    async def _send_results_csv(self, results_for_csv: list[dict[str, any]]):
+    async def _send_results_csv(self, results_for_csv: list[dict[str, any]]) -> None:
         if not results_for_csv:
             await ChannelsManager.get_communication_channel().send_message('No trades to generate summary')
             return

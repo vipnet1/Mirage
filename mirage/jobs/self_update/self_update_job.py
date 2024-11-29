@@ -6,7 +6,7 @@ from mirage.utils.command_utils import run_command_async
 
 
 class SelfUpdateJob(MirageJob):
-    async def execute(self):
+    async def execute(self) -> None:
         await run_command_async('git fetch origin')
         _, remote = await self._get_status()
 
@@ -17,7 +17,7 @@ class SelfUpdateJob(MirageJob):
 
         self._reset_job()
 
-    async def _get_status(self):
+    async def _get_status(self) -> tuple[int, int]:
         result = await run_command_async('git rev-list --count --left-right HEAD...origin/' + consts.MIRAGE_MAIN_BRANCH)
         status = result.split('\t')
         return int(status[0]), int(status[1])

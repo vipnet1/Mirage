@@ -9,11 +9,11 @@ class DbConfig:
     client: pymongo.MongoClient = None
 
     @staticmethod
-    def init_db_connection():
+    def init_db_connection() -> None:
         DbConfig.client = pymongo.MongoClient(
             ConfigManager.config.get(DbConfig.KEY_CONNECTION_STRING)
         )
 
     @staticmethod
-    def close_db_connection():
+    def close_db_connection() -> None:
         DbConfig.client.close()

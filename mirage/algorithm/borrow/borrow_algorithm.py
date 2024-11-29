@@ -22,7 +22,7 @@ class BorrowAlgorithm(MirageAlgorithm):
     OPERATION_BORROW = 'borrow'
     OPERATION_REPAY = 'repay'
 
-    async def _process_command(self, command: dataclass):
+    async def _process_command(self, command: dataclass) -> None:
         if not isinstance(command, Command):
             raise BorrowAlgorithmException(f'Unknown {self.__class__.__name__} command')
 
@@ -35,13 +35,13 @@ class BorrowAlgorithm(MirageAlgorithm):
 
         self.command_results.append(order)
 
-    async def _process_operation_borrow(self, command: Command):
+    async def _process_operation_borrow(self, command: Command) -> dict[str, any]:
         binance = Binance()
         async with binance.exchange:
             logging.info('Borrowing coin on Binance margin. Symbol %s, amount: %s', command.symbol, command.amount)
             return await binance.exchange.borrow_cross_margin(command.symbol, command.amount)
 
-    async def _process_operation_repay(self, command: Command):
+    async def _process_operation_repay(self, command: Command) -> dict[str, any]:
         binance = Binance()
         async with binance.exchange:
             logging.info('Repaying coin on Binance margin. Symbol %s, amount: %s', command.symbol, command.amount)

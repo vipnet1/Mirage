@@ -7,7 +7,7 @@ from mirage.database.mongo.db_config import DbConfig
 
 
 class MirageNexus:
-    async def bootstrap(self):
+    async def bootstrap(self) -> None:
         ConfigManager.init_execution_config()
         ConfigManager.load_main_config()
 
@@ -17,6 +17,6 @@ class MirageNexus:
         ChannelsManager.add_channel(consts.CHANNEL_TRADING_VIEW, TradingViewChannel())
         await ChannelsManager.start_all_channels()
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         await ChannelsManager.stop_all_channels()
         DbConfig.close_db_connection()

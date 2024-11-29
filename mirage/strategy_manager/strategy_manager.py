@@ -94,7 +94,7 @@ class StrategyManager:
 
         logging.info('Strategy flow manager finished successfully')
 
-    def _update_strategy_config(self):
+    def _update_strategy_config(self) -> None:
         self._strategy.strategy_instance_config.set(self.CONFIG_KEY_ALLOCATED_CAPITAL, self._allocated_capital.variable)
         self._strategy.strategy_instance_config.set(self.CONFIG_KEY_STRATEGY_CAPITAL, self._strategy_capital.variable)
         self._strategy.strategy_instance_config.set(self.CONFIG_KEY_CAPITAL_FLOW, self._capital_flow.variable)
@@ -102,7 +102,7 @@ class StrategyManager:
             self._strategy.strategy_instance_config, self._strategy.strategy_name, self._strategy.strategy_instance
         )
 
-    async def _maybe_transfer_capital_to_strategy(self):
+    async def _maybe_transfer_capital_to_strategy(self) -> None:
         if self._strategy_capital.variable != 0:
             return
 
@@ -115,7 +115,7 @@ class StrategyManager:
         self._strategy_capital.variable = self._allocated_capital.variable
         self._capital_flow.variable = self._allocated_capital.variable
 
-    async def _maybe_transfer_capital_from_strategy(self):
+    async def _maybe_transfer_capital_from_strategy(self) -> None:
         if self._capital_flow.variable <= 0:
             logging.warning(
                 'No capital to transfer from strategy. Strategy: %s, Instance: %s',

@@ -6,7 +6,7 @@ class TaskManager:
     tasks_queue: dict[str, list[str]] = {}
 
     @staticmethod
-    async def wait_for_turn(group: str, name: str):
+    async def wait_for_turn(group: str, name: str) -> None:
         if group not in TaskManager.tasks_queue:
             TaskManager.tasks_queue[group] = []
 
@@ -19,5 +19,5 @@ class TaskManager:
             await asyncio.sleep(1)
 
     @staticmethod
-    def finish_turn(group: str):
+    def finish_turn(group: str) -> None:
         TaskManager.tasks_queue[group].pop(0)

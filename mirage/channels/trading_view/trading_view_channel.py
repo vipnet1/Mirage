@@ -9,9 +9,9 @@ class TradingViewChannel(Channel):
         super().__init__()
         self._webhook_server = WebhookServer()
 
-    async def start(self):
+    async def start(self) -> None:
         asyncio.create_task(self._webhook_server.run_server())
 
     # Server automatically stops on receiving Ctrl+C signal. Send in case terminated by setting flag.
-    async def stop(self):
+    async def stop(self) -> None:
         signal.raise_signal(signal.SIGINT)

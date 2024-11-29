@@ -21,12 +21,12 @@ class DbTradePerformance(BaseDbRecord, InputTradePerformance):
 
 
 class MiragePerformance:
-    def record_trade_performance(self, trade_performance: InputTradePerformance):
+    def record_trade_performance(self, trade_performance: InputTradePerformance) -> None:
         db_trade_performance = DbTradePerformance(**asdict(trade_performance))
 
         self._calculcate_profit_percent(db_trade_performance)
 
         insert_dataclass(consts.DB_NAME_MIRAGE_PERFORMANCE, consts.COLLECTION_TRADE_OUTCOMES, db_trade_performance)
 
-    def _calculcate_profit_percent(self, db_trade_performance: DbTradePerformance):
+    def _calculcate_profit_percent(self, db_trade_performance: DbTradePerformance) -> None:
         db_trade_performance.profit_percent = db_trade_performance.profit / db_trade_performance.available_capital

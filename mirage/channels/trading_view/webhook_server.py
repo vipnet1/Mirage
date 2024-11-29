@@ -56,12 +56,12 @@ class WebhookServer:
         self.app.add_middleware(SlowAPIMiddleware)
 
         @self.app.post(consts.WEBHOOK_SERVER_ENDPOINT)
-        async def webhook_endpoint(request: Request):
+        async def webhook_endpoint(request: Request) -> dict[str, any]:
             request_data = await _authenticate(request)
             asyncio.create_task(_process_webhook(request_data))
             return {"status": "success"}
 
-    async def run_server(self):
+    async def run_server(self) -> None:
         server = uvicorn.Server(
             uvicorn.Config(
                 self.app,
@@ -74,7 +74,7 @@ class WebhookServer:
         )
         await server.serve()
 
-    def _get_logging_config(self):
+    def _get_logging_config(self) -> dict[str, any]:
         config = copy.deepcopy(uvicorn.config.LOGGING_CONFIG)
 
         loggers = config['loggers']
@@ -82,3 +82,5 @@ class WebhookServer:
             logger = loggers[logger_name]
             logger['propagate'] = True
             logger['handlers'] = []
+
+        return config

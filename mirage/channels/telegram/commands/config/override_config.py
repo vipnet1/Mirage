@@ -9,7 +9,7 @@ class OverrideConfigCommand(TelegramCommand):
     CONFIG_NAME_MAIN = 'main'
     CONFIG_NAME_STRATEGY = 'strategy'
 
-    async def execute(self):
+    async def execute(self) -> None:
         config_to_override = self._get_top_line()
         if not config_to_override:
             raise MirageTelegramException('Provide config to override on second line')

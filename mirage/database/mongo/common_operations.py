@@ -45,3 +45,8 @@ def _update_record(db_name: str, collection_name: str, clean_query: Dict[str, An
 def get_single_record(db_name: str, collection_name: str, query: Dict[str, Any]):
     collection = DbConfig.client[db_name][collection_name]
     return collection.find_one(query)
+
+
+def get_records(db_name: str, collection_name: str, query: Dict[str, Any]):
+    collection = DbConfig.client[db_name][collection_name]
+    return collection.find(query)

@@ -1,14 +1,13 @@
 from dataclasses import dataclass
-from datetime import datetime
 import logging
 from typing import Optional, Tuple
 
-from bson import ObjectId
 import pymongo
 import consts
 from mirage.algorithm.borrow import borrow_algorithm
 from mirage.algorithm.fetch_tickers import fetch_tickers_algorithm
 from mirage.algorithm.simple_order import simple_order_algorithm
+from mirage.database.mongo.base_db_record import BaseDbRecord
 from mirage.database.mongo.common_operations import insert_dataclass, update_dataclass
 from mirage.database.mongo.db_config import DbConfig
 from mirage.strategy.strategy import Strategy, StrategyException
@@ -30,13 +29,9 @@ class PairInfo:
 
 
 @dataclass
-class PositionInfo:
-    _id: Optional[ObjectId] = None
+class PositionInfo(BaseDbRecord):
     request_data_id: Optional[str] = None
     strategy_instance: Optional[str] = None
-
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
 
     chart_pair: Optional[str] = None
 

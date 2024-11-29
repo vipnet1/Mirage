@@ -31,4 +31,7 @@ def _logging_filter(record: logging.LogRecord):
     if 'HTTP Request: POST https://api.telegram.org/bot' in message:
         return False
 
+    if 'Exception happened while polling for updates' in message:
+        return False
+
     return True

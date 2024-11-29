@@ -89,3 +89,7 @@ class TelegramChannel(CommunicationChannel):
 
     async def send_message(self, message: str):
         await self._application.bot.send_message(chat_id=self._chat_id, text=message)
+
+    async def send_file(self, file_path: str, filename: str):
+        with open(file_path, 'rb') as fp:
+            await self._application.bot.send_document(chat_id=self._chat_id, document=fp, filename=filename)

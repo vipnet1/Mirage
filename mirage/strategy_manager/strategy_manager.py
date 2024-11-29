@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 import logging
 
 from mirage.config.config_manager import ConfigManager
+from mirage.performance.mirage_performance import InputTradePerformance, MiragePerformance
 from mirage.strategy.strategy import Strategy
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.utils.variable_reference import VariableReference
@@ -27,6 +28,7 @@ class StrategyManager:
 
     def __init__(self, strategy: Strategy):
         self._strategy = strategy
+        self._mirage_performance = MiragePerformance()
 
         self._allocated_capital = VariableReference(
             self._strategy.strategy_instance_config.get(self.CONFIG_KEY_ALLOCATED_CAPITAL)
@@ -68,6 +70,7 @@ class StrategyManager:
             self._strategy.capital_flow = self._capital_flow
 
             execution_status: StrategyExecutionStatus = await self._strategy.execute()
+            logging.info('Executed strategy successfully')
 
         except Exception as exc:
             logging.error('Exception occurred. Disabling strategy.')
@@ -88,6 +91,8 @@ class StrategyManager:
 
         if exception_cache:
             raise exception_cache
+
+        logging.info('Strategy flow manager finished successfully')
 
     def _update_strategy_config(self):
         self._strategy.strategy_instance_config.set(self.CONFIG_KEY_ALLOCATED_CAPITAL, self._allocated_capital.variable)
@@ -117,6 +122,14 @@ class StrategyManager:
                 self._strategy.strategy_name, self._strategy.strategy_instance
             )
             return
+
+        self._mirage_performance.record_trade_performance(InputTradePerformance(
+            request_data_id=self._strategy.request_data_id,
+            strategy_name=self._strategy.strategy_name,
+            strategy_instance=self._strategy.strategy_instance,
+            available_capital=self._strategy_capital.variable,
+            profit=self._capital_flow.variable - self._strategy_capital.variable
+        ))
 
         await self._transfer_capital_from_strategy()
 

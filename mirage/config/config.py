@@ -1,4 +1,3 @@
-from typing import Any, Dict
 from mirage.utils.mirage_dict import MirageDict, MirageDictException
 
 
@@ -7,11 +6,11 @@ class ConfigException(Exception):
 
 
 class Config(MirageDict):
-    def __init__(self, raw_dict: Dict[str, Any], config_name: str):
+    def __init__(self, raw_dict: dict[str, any], config_name: str):
         super().__init__(raw_dict)
         self.config_name = config_name
 
-    def get(self, key: str, default_value: Any = None) -> Any:
+    def get(self, key: str, default_value: any = None) -> any:
         try:
             return super().get(key, default_value)
 

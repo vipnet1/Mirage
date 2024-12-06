@@ -10,11 +10,11 @@ class ConfigLoadException(Exception):
     pass
 
 
-def get_config_environment():
+def get_config_environment() -> Path:
     return Path(consts.CONFIG_ENVIRONMENTS_FOLDER) / consts.SELECTED_ENVIRONMENT
 
 
-def _get_environment_strategies_config():
+def _get_environment_strategies_config() -> Path:
     return get_config_environment() / consts.STRATEGIES_CONFIG_FOLDER_NAME
 
 
@@ -30,7 +30,7 @@ def _iterate_strategy_configs() -> Iterator[tuple[Path, dict]]:
             yield file_path, data
 
 
-def _create_strategy_config(strategy_name: str, strategy_instance: str):
+def _create_strategy_config(strategy_name: str, strategy_instance: str) -> None:
     strategy_instance_config = _get_environment_strategies_config() / strategy_name / f'{strategy_instance}.json'
     strategy_instance_config.parent.mkdir(parents=True, exist_ok=True)
     strategy_instance_config.touch()

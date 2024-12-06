@@ -48,6 +48,7 @@ class WebhookServer:
     KEY_PORT = 'channels.tradingview.port'
     KEY_SSL_KEYFILE = 'channels.tradingview.ssl_keyfile'
     KEY_SSL_CERTFILE = 'channels.tradingview.ssl_certfile'
+    KEY_WEBHOOK_SERVER_ENDPOINT = 'channels.tradingview.webhook_server_endpoint'
 
     def __init__(self):
         self.app = FastAPI()
@@ -55,13 +56,13 @@ class WebhookServer:
         self.app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
         self.app.add_middleware(SlowAPIMiddleware)
 
-        @self.app.post(consts.WEBHOOK_SERVER_ENDPOINT)
+        @self.app.post(ConfigManager.config.get(self.KEY_WEBHOOK_SERVER_ENDPOINT))
         async def webhook_endpoint(request: Request):
             request_data = await _authenticate(request)
             asyncio.create_task(_process_webhook(request_data))
             return {"status": "success"}
 
-    async def run_server(self):
+    async def run_server(self) -> None:
         server = uvicorn.Server(
             uvicorn.Config(
                 self.app,
@@ -74,7 +75,7 @@ class WebhookServer:
         )
         await server.serve()
 
-    def _get_logging_config(self):
+    def _get_logging_config(self) -> dict[str, any]:
         config = copy.deepcopy(uvicorn.config.LOGGING_CONFIG)
 
         loggers = config['loggers']
@@ -82,3 +83,5 @@ class WebhookServer:
             logger = loggers[logger_name]
             logger['propagate'] = True
             logger['handlers'] = []
+
+        return config

@@ -14,10 +14,10 @@ class DriveApi:
         self._service_account_file = get_config_environment() / consts.DRIVE_SERVICE_ACCOUNT_FILENAME
         self._mirage_folder_id = ConfigManager.config.get(DriveApi.KEY_MIRAGE_FOLDER_ID)
 
-    def _authenticate(self):
+    def _authenticate(self) -> service_account.Credentials:
         return service_account.Credentials.from_service_account_file(str(self._service_account_file), scopes=self._scopes)
 
-    def upload_file(self, file_path: Path):
+    def upload_file(self, file_path: Path) -> None:
         creds = self._authenticate()
         service = build('drive', 'v3', credentials=creds)
 

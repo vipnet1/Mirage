@@ -72,5 +72,8 @@ But of course, recommend the better protection method for production as you are 
 - TradingView pinescript can use only specific characters(ascii 32-128 I think)
 - You can use key_generator file.
 
+# Additional Measures #
+Endpoint path encrypted in https protocol. We keep the endpoint a secret so it will be harder to find where to send the requests.
+
 # Possible Future todos #
 - TradingView client certificate veritication. The issue is that it is considered not easy and error prone to do this veritication on server side as need to do it manually, and often it caauses bugs/vulneraabilities. Also if want to give another ip Mirage access client certifiction verification will block it.

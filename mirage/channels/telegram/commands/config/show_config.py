@@ -5,11 +5,11 @@ from mirage.config.config_manager import ConfigManager
 
 
 class ShowConfigCommand(TelegramCommand):
-    async def execute(self):
+    async def execute(self) -> None:
         strategy_configs = ConfigManager.get_all_strategy_configs()
         await self._context.bot.send_message(self._update.effective_chat.id, self._get_message_to_send(strategy_configs))
 
-    def _get_message_to_send(self, strategy_configs: list[Config]):
+    def _get_message_to_send(self, strategy_configs: list[Config]) -> str:
         config_strings = []
         for config in strategy_configs:
             config_strings.append(f'{config.config_name}\n' + json.dumps(config.raw_dict))

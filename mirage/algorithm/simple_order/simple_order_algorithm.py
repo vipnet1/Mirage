@@ -45,7 +45,7 @@ class SimpleOrderAlgorithm(MirageAlgorithm):
     OPERATION_BUY = 'buy'
     OPERATION_SELL = 'sell'
 
-    async def _process_command(self, command: CommandBase):
+    async def _process_command(self, command: CommandBase) -> None:
         self._validate_command(command)
 
         if isinstance(command, CommandAmount):
@@ -60,7 +60,7 @@ class SimpleOrderAlgorithm(MirageAlgorithm):
         self._capital_flow.variable += order['cost'] if command.operation == self.OPERATION_SELL else -order['cost']
         self.command_results.append(order)
 
-    def _validate_command(self, command: CommandBase):
+    def _validate_command(self, command: CommandBase) -> None:
         if command.operation not in [SimpleOrderAlgorithm.OPERATION_BUY, SimpleOrderAlgorithm.OPERATION_SELL]:
             raise SimpleOrderAlgorithmException(f'Unknown operation {command.operation}')
 
@@ -76,7 +76,7 @@ class SimpleOrderAlgorithm(MirageAlgorithm):
         if command.type == SimpleOrderAlgorithm.TYPE_LIMIT and isinstance(command, CommandCost):
             raise SimpleOrderAlgorithmException('No cost command for limit order type')
 
-    async def _process_command_amount(self, command: CommandAmount):
+    async def _process_command_amount(self, command: CommandAmount) -> None:
         binance = Binance()
         async with binance.exchange:
             logging.info('Placing %s order on binance. Symbol %s, amount: %s', command.wallet, command.symbol, command.amount)
@@ -91,7 +91,7 @@ class SimpleOrderAlgorithm(MirageAlgorithm):
                 }
             )
 
-    async def _process_command_cost(self, command: CommandCost):
+    async def _process_command_cost(self, command: CommandCost) -> None:
         binance = Binance()
         async with binance.exchange:
             logging.info('Placing %s order on binance. Symbol %s, cost: %s', command.wallet, command.symbol, command.cost)

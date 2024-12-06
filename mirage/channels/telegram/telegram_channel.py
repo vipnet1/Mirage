@@ -75,17 +75,21 @@ class TelegramChannel(CommunicationChannel):
         self._application = ApplicationBuilder().token(ConfigManager.config.get(TelegramChannel.KEY_TOKEN)).build()
         self._chat_id = ConfigManager.config.get(TelegramChannel.KEY_CHAT_ID)
 
-    async def start(self):
+    async def start(self) -> None:
         self._application.add_handlers([MessageHandler(filters=None, callback=_handle_command)])
 
         await self._application.initialize()
         await self._application.start()
         await self._application.updater.start_polling()
 
-    async def stop(self):
+    async def stop(self) -> None:
         await self._application.updater.stop()
         await self._application.stop()
         await self._application.shutdown()
 
-    async def send_message(self, message: str):
+    async def send_message(self, message: str) -> None:
         await self._application.bot.send_message(chat_id=self._chat_id, text=message)
+
+    async def send_file(self, file_path: str, filename: str) -> None:
+        with open(file_path, 'rb') as fp:
+            await self._application.bot.send_document(chat_id=self._chat_id, document=fp, filename=filename)

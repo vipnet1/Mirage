@@ -9,7 +9,7 @@ from mirage.utils.date_utils import get_utc_datetime_for_filename
 
 
 class BackupCommand(TelegramCommand):
-    async def execute(self):
+    async def execute(self) -> None:
         with tempfile.TemporaryDirectory() as dir_name:
             tempdir = Path(dir_name)
             backup_dir = tempdir / 'mirage_backup'

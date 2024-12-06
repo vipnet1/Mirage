@@ -20,10 +20,10 @@ class TelegramCommand:
         splitted = self._clean_text.split('\n', 1)
         self._clean_text = '' if len(splitted) == 1 else splitted[1]
 
-    def _get_top_line(self):
+    def _get_top_line(self) -> str:
         splitted = self._clean_text.splitlines()
         return splitted[0] if splitted else ''
 
     @abstractmethod
-    async def execute(self):
+    async def execute(self) -> None:
         raise NotImplementedError()

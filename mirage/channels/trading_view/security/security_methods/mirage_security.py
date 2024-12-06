@@ -37,7 +37,7 @@ class MirageSecurity(SecurityMethod):
         except Exception as exc:
             raise MirageSecurityException('Exception during mirage security authentication') from exc
 
-    def _validate_hash(self, message_content: str, message_hash: str):
+    def _validate_hash(self, message_content: str, message_hash: str) -> None:
         sha256_hash = hashlib.sha256()
         sha256_hash.update((message_content + self._method_config.get(self.CONFIG_SECRET_KEY)).encode())
 
@@ -46,7 +46,7 @@ class MirageSecurity(SecurityMethod):
 
         raise MirageSecurityException('Invalid message hash')
 
-    def _validate_request_expiration(self, timenow: int):
+    def _validate_request_expiration(self, timenow: int) -> None:
         current_time = int(time.time())
         time_difference = current_time - timenow / 1000
 
@@ -55,14 +55,14 @@ class MirageSecurity(SecurityMethod):
 
         raise MirageSecurityException('Request expired')
 
-    def _validate_request_nonce(self, nonce: str):
+    def _validate_request_nonce(self, nonce: str) -> None:
         result = get_single_record(consts.DB_NAME_MIRAGE_SECURITY, consts.COLLECTION_REQUEST_NONCES, {'_id': nonce})
         if result is None:
             return
 
         raise MirageSecurityException('Nonce already exists')
 
-    def _insert_request_nonce(self, nonce: str):
+    def _insert_request_nonce(self, nonce: str) -> None:
         insert_dict(consts.DB_NAME_MIRAGE_SECURITY, consts.COLLECTION_REQUEST_NONCES, {'_id': nonce})
 
     def _decrypt_data(self, data: str) -> dict[str, any]:
@@ -74,6 +74,6 @@ class MirageSecurity(SecurityMethod):
         content = decrypted_data.decode()
         return json.loads(content)
 
-    def _create_bytearray_from_data(self, data: str):
+    def _create_bytearray_from_data(self, data: str) -> bytearray:
         numbers = data.split(',')
         return bytearray([int(number) for number in numbers])

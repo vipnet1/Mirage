@@ -48,7 +48,7 @@ class WebhookHandler:
         strategy_name = self._request_json.get(WebhookHandler.KEY_STRATEGY_NAME)
 
         if strategy_name not in enabled_strategies:
-            raise WebhookRequestException('Strategy {strategy_name} is not enabled.')
+            raise WebhookRequestException(f'Strategy {strategy_name} is not enabled.')
 
         strategy_instance_id = self._request_json.get(WebhookHandler.KEY_STRATEGY_INSTANCE_ID)
         return enabled_strategies[strategy_name](

@@ -10,6 +10,7 @@ from mirage.algorithm.simple_order import simple_order_algorithm
 from mirage.database.mongo.base_db_record import BaseDbRecord
 from mirage.database.mongo.common_operations import insert_dataclass, update_dataclass
 from mirage.database.mongo.db_config import DbConfig
+from mirage.strategy.crypto_pair_trading.pair_info_parser import PairInfoParser
 from mirage.strategy.strategy import Strategy, StrategyException
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.utils import symbol_utils
@@ -22,16 +23,10 @@ class CryptoPairTradingException(StrategyException):
 
 
 @dataclass
-class PairInfo:
-    first_pair: str
-    second_pair: str
-    ratio: float
-
-
-@dataclass
 class PositionInfo(BaseDbRecord):
     request_data_id: Optional[str] = None
     strategy_instance: Optional[str] = None
+    indicator: Optional[str] = None
 
     chart_pair: Optional[str] = None
 
@@ -50,10 +45,11 @@ class CryptoPairTrading(Strategy):
     CONFIG_KEY_MAX_LOSS_PERCENT = 'strategy.max_loss_percent'
     CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
 
-    DATA_PAIR = 'pair'
     DATA_ACTION = 'action'
+    DATA_PAIR = 'pair'
     DATA_SIDE = 'side'
-    DATA_STOPLOSS_DISTANCE = 'stoploss_distance'
+    DATA_PRICE = 'price'
+    DATA_STOPLOSS_PRICE = 'stoploss_price'
 
     ACTION_ENTRY = 'entry'
     ACTION_EXIT = 'exit'
@@ -80,12 +76,15 @@ class CryptoPairTrading(Strategy):
         pair_raw = self.strategy_data.get(CryptoPairTrading.DATA_PAIR)
         action = self.strategy_data.get(CryptoPairTrading.DATA_ACTION)
 
-        self._pair_info = self._parse_pair_info()
+        base_currency = self.strategy_instance_config.get(CryptoPairTrading.CONFIG_KEY_BASE_CURRENCY)
+        self._pair_info = PairInfoParser(pair_raw, base_currency).parse_pair_info()
         self._validate_pair_info_from_base_currency()
 
         if action == CryptoPairTrading.ACTION_ENTRY:
             if self._existing_position:
-                logging.warning("Can't enter new position: another one exists with the chart pair %s", pair_raw)
+                logging.warning(
+                    "Can't enter new position: another one exists. Strategy instance %s, pair %s", self._existing_position.strategy_instance, pair_raw
+                )
                 return False
 
             self._coin1_amount, self._coin2_amount = self._calculate_positions_for_coins()
@@ -137,7 +136,7 @@ class CryptoPairTrading(Strategy):
         else:
             raise CryptoPairTradingException(f'Invalid side received {side} with chart pair {pair_raw}')
 
-        pair = self._pair_info.first_pair.split('/')[0] + '/' + self._pair_info.second_pair.split('/')[0]
+        pair = get_base_symbol(self._pair_info.first_pair) + '/' + get_base_symbol(self._pair_info.second_pair)
         insert_dataclass(
             consts.DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING,
             consts.COLLECTION_POSITION_INFO,
@@ -262,21 +261,9 @@ class CryptoPairTrading(Strategy):
             sort=[(consts.RECORD_KEY_CREATED_AT, pymongo.DESCENDING)]
         )
 
-    def _parse_pair_info(self) -> PairInfo:
-        pair_raw = self.strategy_data.get(CryptoPairTrading.DATA_PAIR)
-
-        parts = pair_raw.split('-')
-        first_pair, ratio_string = parts
-
-        ratio_parts = ratio_string.split('*')
-        ratio = int(ratio_parts[0])
-        second_pair = ratio_parts[1]
-
-        return PairInfo(first_pair, second_pair, ratio)
-
     def _calculate_positions_for_coins(self) -> Tuple[float, float]:
         max_loss_percent = self.strategy_instance_config.get(CryptoPairTrading.CONFIG_KEY_MAX_LOSS_PERCENT)
-        stoploss_distance = self.strategy_data.get(CryptoPairTrading.DATA_STOPLOSS_DISTANCE)
+        stoploss_distance = abs(self.strategy_data.get(CryptoPairTrading.DATA_PRICE) - self.strategy_data.get(CryptoPairTrading.DATA_STOPLOSS_PRICE))
 
         coin1_amount = self.allocated_capital.variable * (max_loss_percent / 100) / stoploss_distance
         coin2_amount = coin1_amount * self._pair_info.ratio
@@ -287,13 +274,13 @@ class CryptoPairTrading(Strategy):
         base_currency = self.strategy_instance_config.get(CryptoPairTrading.CONFIG_KEY_BASE_CURRENCY)
         if (symbol_utils.get_quote_symbol(self._pair_info.first_pair) != base_currency
                 or symbol_utils.get_quote_symbol(self._pair_info.second_pair) != base_currency):
-            raise CryptoPairTradingException('Pair quote currency does not match config base currency - {base_currency}')
+            raise CryptoPairTradingException(f'Pair quote currency does not match config base currency - {base_currency}')
 
     async def _validate_can_enter_position(self) -> None:
         """
         Allow going long using strategy capital only. The short pair borrowed.
         Anyway check that each one of coins amount * price value less than strategy capital, because
-        longed & shorted mount should be more less the same should be fine.
+        longed & shorted amount should be more less the same should be fine.
         """
         fta = fetch_tickers_algorithm.FetchTickersAlgorithm(
             self.capital_flow,
@@ -312,7 +299,7 @@ class CryptoPairTrading(Strategy):
         self._validate_pair_cost_fine(self._pair_info.first_pair, results[self._pair_info.first_pair]['last'], self._coin1_amount)
         self._validate_pair_cost_fine(self._pair_info.second_pair, results[self._pair_info.second_pair]['last'], self._coin2_amount)
 
-    def _validate_pair_cost_fine(self, pair: str, price: float, amount: float):
+    def _validate_pair_cost_fine(self, pair: str, price: float, amount: float) -> None:
         total = price * amount
         if total >= self.allocated_capital.variable:
             raise CryptoPairTradingException(f'Need to buy/borrow {total} of pair {pair}, but max is {self.allocated_capital.variable}')

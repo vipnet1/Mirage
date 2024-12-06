@@ -21,7 +21,7 @@ class StrategyManager:
     CONFIG_KEY_ALLOCATED_CAPITAL = 'strategy_manager.allocated_capital'
     # How many transferred to the hands of the strategy. How many the strategy 'borrowed' from us and needs to return.
     CONFIG_KEY_STRATEGY_CAPITAL = 'strategy_manager.strategy_capital'
-    # Starting with 0. When spending becomes negative, when earning positive. Includes spending to borrow & repay.
+    # How many strategy currently holds and can work with.
     CONFIG_KEY_CAPITAL_FLOW = 'strategy_manager.capital_flow'
 
     CONFIG_KEY_IS_ACTIVE = 'strategy_manager.is_active'
@@ -82,7 +82,7 @@ class StrategyManager:
                 await self._maybe_transfer_capital_from_strategy()
 
         except Exception as exc:
-            logging.critical('Failed transferring money out of strategy. Disabling strategy.')
+            logging.critical('Failed transferring money out of strategy.')
             logging.exception('Previously another exception occurred.', exc_info=exception_cache)
             raise exc
 
@@ -132,11 +132,6 @@ class StrategyManager:
         ))
 
         await self._transfer_capital_from_strategy()
-
-        self._strategy.strategy_instance_config.set(
-            self.CONFIG_KEY_ALLOCATED_CAPITAL,
-            self._strategy.strategy_instance_config.get(self.CONFIG_KEY_ALLOCATED_CAPITAL) + self._capital_flow.variable - self._capital_flow.variable
-        )
 
         self._allocated_capital.variable += self._capital_flow.variable - self._strategy_capital.variable
         self._strategy_capital.variable = 0

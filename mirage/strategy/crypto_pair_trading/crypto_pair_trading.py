@@ -40,6 +40,11 @@ class PositionInfo(BaseDbRecord):
 
 
 class CryptoPairTrading(Strategy):
+    """
+    If X money available, then can buy with X and sell with borrowed X too.
+    Meaning can borrow and use only the available amount once again.
+    """
+
     description = 'Go long & short on pairs. Binance margin account.'
 
     CONFIG_KEY_MAX_LOSS_PERCENT = 'strategy.max_loss_percent'
@@ -92,7 +97,7 @@ class CryptoPairTrading(Strategy):
                 return False
 
             self._coin1_amount, self._coin2_amount = self._calculate_positions_for_coins()
-            await self._validate_can_enter_position()
+            await self._maybe_reduce_position()
 
         elif action == CryptoPairTrading.ACTION_EXIT:
             if not self._existing_position:
@@ -259,14 +264,6 @@ class CryptoPairTrading(Strategy):
             ]
         ).execute()
 
-    async def exception_revert(self) -> bool:
-        action = self.strategy_data.get(CryptoPairTrading.DATA_ACTION)
-        if action == CryptoPairTrading.ACTION_EXIT:
-            return False
-
-        while self._entry_state.value != EntryState.NONE:
-            if self._entry_state == EntryState.SELL:
-
     def _get_recent_position_info_from_db(self):
         return DbConfig.client[consts.DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING][consts.COLLECTION_POSITION_INFO].find_one(
             dataclass_to_dict(PositionInfo(strategy_instance=self.strategy_instance)),
@@ -288,11 +285,11 @@ class CryptoPairTrading(Strategy):
                 or symbol_utils.get_quote_symbol(self._pair_info.second_pair) != base_currency):
             raise CryptoPairTradingException(f'Pair quote currency does not match config base currency - {base_currency}')
 
-    async def _validate_can_enter_position(self) -> None:
+    async def _maybe_reduce_position(self) -> None:
         """
         Allow going long using strategy capital only. The short pair borrowed.
         Anyway check that each one of coins amount * price value less than strategy capital, because
-        longed & shorted amount should be more less the same should be fine.
+        longed & shorted amount should be more less the same should be fine. If not reduce position.
         """
         fta = fetch_tickers_algorithm.FetchTickersAlgorithm(
             self.capital_flow,
@@ -307,11 +304,17 @@ class CryptoPairTrading(Strategy):
         )
         await fta.execute()
 
+        # As sometimes can trade with more funds than what have allocated as satisfies max loss percent, limit The amount to trade with.
         results = fta.command_results[0]
-        self._validate_pair_cost_fine(self._pair_info.first_pair, results[self._pair_info.first_pair]['last'], self._coin1_amount)
-        self._validate_pair_cost_fine(self._pair_info.second_pair, results[self._pair_info.second_pair]['last'], self._coin2_amount)
+        coin1_ratio = self._get_reduction_ratio(results[self._pair_info.first_pair]['last'], self._coin1_amount)
+        coin2_ratio = self._get_reduction_ratio(results[self._pair_info.second_pair]['last'], self._coin2_amount)
 
-    def _validate_pair_cost_fine(self, pair: str, price: float, amount: float) -> None:
+        reduction_ratio = coin1_ratio if coin1_ratio > coin2_ratio else coin2_ratio
+        if reduction_ratio > 1:
+            logging.info('Performing position reduction(%s%s of original amount)', str(1 / reduction_ratio), '%')
+            self._coin1_amount /= reduction_ratio
+            self._coin2_amount /= reduction_ratio
+
+    def _get_reduction_ratio(self, price: float, amount: float) -> float:
         total = price * amount
-        if total >= self.allocated_capital.variable:
-            raise CryptoPairTradingException(f'Need to buy/borrow {total} of pair {pair}, but max is {self.allocated_capital.variable}')
+        return total / self.allocated_capital.variable if total > self.allocated_capital.variable else 1

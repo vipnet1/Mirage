@@ -4,6 +4,7 @@ from mirage.channels.telegram.commands.backup import BackupCommand
 from mirage.channels.telegram.commands.config.override_config import OverrideConfigCommand
 from mirage.channels.telegram.commands.config.show_config import ShowConfigCommand
 from mirage.channels.telegram.commands.config.update_config import UpdateConfigCommand
+from mirage.config.suspend_state import SuspendState
 
 enabled_commands: dict[str, TelegramCommand] = {
     'backup': BackupCommand,
@@ -15,6 +16,7 @@ enabled_commands: dict[str, TelegramCommand] = {
 
 enabled_aliases: dict[str, str] = {
     'terminate': 'update-config\nexecution\n{"terminate": true}',
-    'suspend': 'update-config\nexecution\n{"suspend": true}',
-    'unsuspend': 'update-config\nexecution\n{"suspend": false}',
+    'suspend-trades': 'update-config\nexecution\n{"suspend": "' + SuspendState.TRADES.value + '"}',
+    'suspend-entry': 'update-config\nexecution\n{"suspend": "' + SuspendState.ENTRY.value + '"}',
+    'unsuspend': 'update-config\nexecution\n{"suspend": "' + SuspendState.NONE.value + '"}',
 }

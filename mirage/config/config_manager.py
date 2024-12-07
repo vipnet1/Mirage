@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Iterator
 import consts
 from mirage.config.config import Config
+from mirage.config.suspend_state import SuspendState
 
 
 class ConfigLoadException(Exception):
@@ -56,7 +57,7 @@ class ConfigManager:
     @staticmethod
     def init_execution_config() -> None:
         ConfigManager.execution_config = Config({
-            consts.EXECUTION_CONFIG_KEY_SUSPEND: False,
+            consts.EXECUTION_CONFIG_KEY_SUSPEND: SuspendState.NONE.value,
             consts.EXECUTION_CONFIG_KEY_TERMINATE: False,
             consts.EXECUTION_CONFIG_KEY_UPDATE: False
         }, 'Execution config')

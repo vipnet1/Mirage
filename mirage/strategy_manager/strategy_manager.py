@@ -1,7 +1,9 @@
 from abc import ABCMeta, abstractmethod
 import logging
 
+import consts
 from mirage.config.config_manager import ConfigManager
+from mirage.config.suspend_state import SuspendState
 from mirage.performance.mirage_performance import InputTradePerformance, MiragePerformance
 from mirage.strategy.strategy import Strategy
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
@@ -52,6 +54,9 @@ class StrategyManager:
         """
         If exception occurs, return funds and disable strategy.
         """
+        if self._is_suspent():
+            return
+
         execution_status = StrategyExecutionStatus.RETURN_FUNDS
         exception_cache = None
 
@@ -73,7 +78,7 @@ class StrategyManager:
             logging.info('Executed strategy successfully')
 
         except Exception as exc:
-            logging.error('Exception occurred. Disabling strategy.')
+            logging.error('Exception occurred. Disabling strategy instance.')
             self._strategy.strategy_instance_config.set(self.CONFIG_KEY_IS_ACTIVE, False)
             exception_cache = exc
 
@@ -101,6 +106,19 @@ class StrategyManager:
         ConfigManager.update_strategy_config(
             self._strategy.strategy_instance_config, self._strategy.strategy_name, self._strategy.strategy_instance
         )
+
+    def _is_suspent(self) -> bool:
+        state = SuspendState(ConfigManager.execution_config.get(consts.EXECUTION_CONFIG_KEY_SUSPEND))
+        if state == SuspendState.TRADES:
+            logging.warning('Mirage suspent trades, ignoring request.')
+            return True
+
+        is_entry = self._strategy.is_entry()
+        if state == SuspendState.ENTRY and is_entry:
+            logging.warning('Mirage suspent entry, ignoring request.')
+            return True
+
+        return False
 
     async def _maybe_transfer_capital_to_strategy(self) -> None:
         if self._strategy_capital.variable != 0:

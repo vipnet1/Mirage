@@ -9,6 +9,9 @@ class BuyBtc(Strategy):
     async def should_execute_strategy(self) -> bool:
         return True
 
+    def is_entry(self) -> bool:
+        return True
+
     async def execute(self) -> StrategyExecutionStatus:
         await super().execute()
         await SimpleOrderAlgorithm(

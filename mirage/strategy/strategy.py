@@ -45,3 +45,20 @@ class Strategy:
     @abstractmethod
     async def execute(self) -> StrategyExecutionStatus:
         logging.info('Executing %s strategy', self.__class__.__name__)
+
+    @abstractmethod
+    def is_entry(self) -> bool:
+        """
+        Whether entry or not. To block entry signals and allow exit in case of suspention.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def exception_revert(self) -> bool:
+        """
+        Some error or something unexpected occurred.
+        Try handle the issue so strategy manager can take out the funds.
+        For example repay borrowed funds if buy/sell failed.
+        Return whether revert successfull. If not need manual action to save the lost funds.
+        """
+        return False

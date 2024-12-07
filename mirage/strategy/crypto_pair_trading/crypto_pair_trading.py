@@ -70,6 +70,10 @@ class CryptoPairTrading(Strategy):
         self._coin1_amount = None
         self._coin2_amount = None
 
+    def is_entry(self) -> bool:
+        action = self.strategy_data.get(CryptoPairTrading.DATA_ACTION)
+        return action == CryptoPairTrading.ACTION_ENTRY
+
     async def should_execute_strategy(self) -> bool:
         self._existing_position = self._get_recent_position_info()
 
@@ -254,6 +258,14 @@ class CryptoPairTrading(Strategy):
                 )
             ]
         ).execute()
+
+    async def exception_revert(self) -> bool:
+        action = self.strategy_data.get(CryptoPairTrading.DATA_ACTION)
+        if action == CryptoPairTrading.ACTION_EXIT:
+            return False
+
+        while self._entry_state.value != EntryState.NONE:
+            if self._entry_state == EntryState.SELL:
 
     def _get_recent_position_info_from_db(self):
         return DbConfig.client[consts.DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING][consts.COLLECTION_POSITION_INFO].find_one(

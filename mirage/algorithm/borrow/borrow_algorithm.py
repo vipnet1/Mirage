@@ -10,39 +10,51 @@ class BorrowAlgorithmException(Exception):
 
 
 @dataclass
-class Command(CommandBase):
-    operation: str
+class BorrowCommand(CommandBase):
     symbol: str
     amount: str
+
+
+@dataclass
+class RepayCommand(CommandBase):
+    symbol: str
+    amount: str
+
+
+@dataclass
+class FetchBalanceCommand(CommandBase):
+    pass
 
 
 class BorrowAlgorithm(MirageAlgorithm):
     description = 'Supports borrow & repay commands in Binance cross margin wallet'
 
-    OPERATION_BORROW = 'borrow'
-    OPERATION_REPAY = 'repay'
-
     async def _process_command(self, command: dataclass) -> None:
-        if not isinstance(command, Command):
+        if isinstance(command, BorrowCommand):
+            result = await self._process_operation_borrow(command)
+        elif isinstance(command, RepayCommand):
+            result = await self._process_operation_repay(command)
+        elif isinstance(command, FetchBalanceCommand):
+            result = await self._fetch_balance()
+        else:
             raise BorrowAlgorithmException(f'Unknown {self.__class__.__name__} command')
 
-        if command.operation == BorrowAlgorithm.OPERATION_BORROW:
-            order = await self._process_operation_borrow(command)
-        elif command.operation == BorrowAlgorithm.OPERATION_REPAY:
-            order = await self._process_operation_repay(command)
-        else:
-            raise BorrowAlgorithmException(f'Unknown operation {command.operation}')
+        self.command_results.append(result)
 
-        self.command_results.append(order)
-
-    async def _process_operation_borrow(self, command: Command) -> dict[str, any]:
+    async def _process_operation_borrow(self, command: BorrowCommand) -> dict[str, any]:
         binance = Binance()
         async with binance.exchange:
             logging.info('Borrowing coin on Binance margin. Symbol %s, amount: %s', command.symbol, command.amount)
             return await binance.exchange.borrow_cross_margin(command.symbol, command.amount)
 
-    async def _process_operation_repay(self, command: Command) -> dict[str, any]:
+    async def _process_operation_repay(self, command: RepayCommand) -> dict[str, any]:
         binance = Binance()
         async with binance.exchange:
             logging.info('Repaying coin on Binance margin. Symbol %s, amount: %s', command.symbol, command.amount)
             return await binance.exchange.repay_cross_margin(command.symbol, command.amount)
+
+    async def _fetch_balance(self):
+        binance = Binance()
+        async with binance.exchange:
+            logging.info('Fetching available coins for borrow')
+            return await binance.exchange.fetch_balance()

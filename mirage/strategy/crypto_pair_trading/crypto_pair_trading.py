@@ -11,6 +11,7 @@ from mirage.database.mongo.base_db_record import BaseDbRecord
 from mirage.database.mongo.common_operations import insert_dataclass, update_dataclass
 from mirage.database.mongo.db_config import DbConfig
 from mirage.strategy.crypto_pair_trading.pair_info_parser import PairInfoParser
+from mirage.strategy.pre_execution_status import PARAM_ALLOCATED_PERCENT, PreExecutionStatus
 from mirage.strategy.strategy import Strategy, StrategyException
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.utils.dict_utils import dataclass_to_dict
@@ -73,12 +74,13 @@ class CryptoPairTrading(Strategy):
         self._longed_amount = None
         self._shorted_coin = None
         self._shorted_amount = None
+        self._percent_of_allocated = 1
 
     def is_entry(self) -> bool:
         action = self.strategy_data.get(CryptoPairTrading.DATA_ACTION)
         return action == CryptoPairTrading.ACTION_ENTRY
 
-    async def should_execute_strategy(self) -> bool:
+    async def should_execute_strategy(self) -> tuple[bool, PreExecutionStatus, dict[str, any]]:
         self._existing_position = self._get_recent_position_info()
 
         pair_raw = self.strategy_data.get(CryptoPairTrading.DATA_PAIR)
@@ -92,7 +94,7 @@ class CryptoPairTrading(Strategy):
                 logging.warning(
                     "Can't enter new position: another one exists. Strategy instance %s, pair %s", self._existing_position.strategy_instance, pair_raw
                 )
-                return False
+                return False, None, None
 
             side = self.strategy_data.get(CryptoPairTrading.DATA_SIDE)
             if side not in [self.SIDE_LONG, self.SIDE_SHORT]:
@@ -109,7 +111,7 @@ class CryptoPairTrading(Strategy):
         elif action == CryptoPairTrading.ACTION_EXIT:
             if not self._existing_position:
                 logging.warning("Can't exit position as not in active with chart pair %s", pair_raw)
-                return False
+                return False, None, None
 
             self._longed_coin = self._existing_position.longed_coin
             self._longed_amount = self._existing_position.longed_amount
@@ -118,7 +120,7 @@ class CryptoPairTrading(Strategy):
         else:
             raise CryptoPairTradingException(f'Invalid action {action} with chart pair {pair_raw}')
 
-        return True
+        return True, PreExecutionStatus.PARTIAL_ALLOCATION, {PARAM_ALLOCATED_PERCENT: self._percent_of_allocated}
 
     async def execute(self) -> StrategyExecutionStatus:
         await super().execute()
@@ -298,8 +300,27 @@ class CryptoPairTrading(Strategy):
         longed_coin_price = results[self._longed_coin]['last']
         shorted_coin_price = results[self._shorted_coin]['last']
 
-        self._longed_amount = 0.5 * self.allocated_capital.variable / longed_coin_price
-        self._shorted_amount = 0.5 * self.allocated_capital.variable / shorted_coin_price
+        self._calculate_coins_amounts(longed_coin_price, shorted_coin_price)
+
+    def _calculate_coins_amounts(self, longed_coin_price: float, shorted_coin_price: float) -> None:
+        # If have 70$ funds, allow borrow 70$ for shorting. Meaning can enter 140$ positions in total.
+        self._longed_amount = self.allocated_capital.variable / longed_coin_price
+        self._shorted_amount = self.allocated_capital.variable / shorted_coin_price
+
+        # Check if should reduce positions because of risk management
+        price = self.strategy_data.get(CryptoPairTrading.DATA_PRICE)
+        stoploss = self.strategy_data.get(CryptoPairTrading.DATA_STOPLOSS_PRICE)
+        max_loss_percent = self.strategy_instance_config.get(CryptoPairTrading.CONFIG_KEY_MAX_LOSS_PERCENT)
+
+        amount_want_to_buy = self.allocated_capital.variable / price
+        max_amount_can_buy = ((max_loss_percent / 100) * self.allocated_capital.variable) / abs(price - stoploss)
+
+        if amount_want_to_buy > max_amount_can_buy:
+            self._percent_of_allocated = max_amount_can_buy / amount_want_to_buy
+            logging.info('Reducing position to manage risk. Entering with %s%s of available amount.', str(self._percent_of_allocated * 100), '%')
+
+            self._longed_amount *= self._percent_of_allocated
+            self._shorted_amount *= self._percent_of_allocated
 
     # async def _get_available_borrow_funds(self) -> float:
     #     fta = borrow_algorithm.BorrowAlgorithm(

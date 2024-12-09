@@ -17,7 +17,7 @@ class BinanceStrategyManager(StrategyManager):
     CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
     CONFIG_KEY_WALLET = 'strategy_manager.wallet'
 
-    async def _transfer_capital_to_strategy(self) -> None:
+    async def _transfer_capital_to_strategy(self, amount: float) -> None:
         wallet = self._strategy.strategy_instance_config.get(self.CONFIG_KEY_WALLET)
         base_currency = self._strategy.strategy_instance_config.get(self.CONFIG_KEY_BASE_CURRENCY)
 
@@ -30,7 +30,7 @@ class BinanceStrategyManager(StrategyManager):
                     description=f'Transfer strategy funds from funding wallet to {wallet} wallet. \
                     Strategy {self._strategy.strategy_name}, Instance: {self._strategy.strategy_instance}',
                     asset=base_currency,
-                    amount=self._allocated_capital.variable,
+                    amount=amount,
                     from_wallet=BinanceStrategyManager.FUNDING_WALLET,
                     to_wallet=wallet
                 )

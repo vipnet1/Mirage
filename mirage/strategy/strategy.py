@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 import logging
 
 from mirage.config.config_manager import ConfigManager
+from mirage.strategy.pre_execution_status import PreExecutionStatus
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.utils.mirage_dict import MirageDict
 from mirage.utils.variable_reference import VariableReference
@@ -35,10 +36,10 @@ class Strategy:
         self.capital_flow: VariableReference = None
 
     @abstractmethod
-    async def should_execute_strategy(self) -> bool:
+    async def should_execute_strategy(self) -> tuple[bool, PreExecutionStatus, dict[str, any]]:
         """
         Check if for some reason will ignore the request. Returning true means funds may be transferred to the
-        hands of the strategy. Check invalid request format, whether alredy existing position exists etc.
+        hands of the strategy. Check invalid request format, whether already existing position exists etc.
         """
         raise NotImplementedError()
 

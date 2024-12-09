@@ -5,6 +5,7 @@ import consts
 from mirage.config.config_manager import ConfigManager
 from mirage.config.suspend_state import SuspendState
 from mirage.performance.mirage_performance import InputTradePerformance, MiragePerformance
+from mirage.strategy.pre_execution_status import PARAM_ALLOCATED_PERCENT, PreExecutionStatus
 from mirage.strategy.strategy import Strategy
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.utils.variable_reference import VariableReference
@@ -43,7 +44,7 @@ class StrategyManager:
         )
 
     @abstractmethod
-    async def _transfer_capital_to_strategy(self) -> None:
+    async def _transfer_capital_to_strategy(self, amount: float) -> None:
         raise NotImplementedError()
 
     @abstractmethod
@@ -66,10 +67,15 @@ class StrategyManager:
             if not self._should_trade_strategy():
                 return
 
-            if not await self._strategy.should_execute_strategy():
+            should_trade, status, params = await self._strategy.should_execute_strategy()
+            if not should_trade:
                 return
 
-            await self._maybe_transfer_capital_to_strategy()
+            transfer_amount = self._allocated_capital.variable
+            if status == PreExecutionStatus.PARTIAL_ALLOCATION:
+                transfer_amount *= params[PARAM_ALLOCATED_PERCENT]
+
+            await self._maybe_transfer_capital_to_strategy(transfer_amount)
 
             self._strategy.strategy_capital = self._strategy_capital
             self._strategy.capital_flow = self._capital_flow
@@ -120,7 +126,7 @@ class StrategyManager:
 
         return False
 
-    async def _maybe_transfer_capital_to_strategy(self) -> None:
+    async def _maybe_transfer_capital_to_strategy(self, transfer_amount: float) -> None:
         if self._strategy_capital.variable != 0:
             return
 
@@ -128,10 +134,10 @@ class StrategyManager:
             raise StrategyManagerException('No allocated capital. Need to allocate more money.'
                                            f'Strategy: {self._strategy.strategy_name}, Instance: {self._strategy.strategy_instance}')
 
-        await self._transfer_capital_to_strategy()
+        await self._transfer_capital_to_strategy(transfer_amount)
 
-        self._strategy_capital.variable = self._allocated_capital.variable
-        self._capital_flow.variable = self._allocated_capital.variable
+        self._strategy_capital.variable = transfer_amount
+        self._capital_flow.variable = transfer_amount
 
     async def _maybe_transfer_capital_from_strategy(self) -> None:
         if self._capital_flow.variable <= 0:

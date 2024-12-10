@@ -8,7 +8,9 @@ from mirage.performance.mirage_performance import InputTradePerformance, MirageP
 from mirage.strategy.pre_execution_status import PARAM_ALLOCATED_PERCENT, PreExecutionStatus
 from mirage.strategy.strategy import Strategy
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
+from mirage.tasks.task_manager import TaskManager
 from mirage.utils.variable_reference import VariableReference
+from tools.key_generator import generate_key
 
 
 class StrategyManagerException(Exception):
@@ -17,6 +19,8 @@ class StrategyManagerException(Exception):
 
 class StrategyManager:
     __metaclass__ = ABCMeta
+
+    TASK_GROUP_TRADE_REQUESTS = 'trade_requests'
 
     description = ''
 
@@ -52,12 +56,16 @@ class StrategyManager:
         raise NotImplementedError()
 
     async def process_strategy(self) -> None:
-        """
-        If exception occurs, return funds and disable strategy.
-        """
         if self._is_suspent():
             return
 
+        try:
+            await TaskManager.wait_for_turn(StrategyManager.TASK_GROUP_TRADE_REQUESTS, generate_key(20))
+            await self._process_strategy_internal()
+        finally:
+            TaskManager.finish_turn(StrategyManager.TASK_GROUP_TRADE_REQUESTS)
+
+    async def _process_strategy_internal(self) -> None:
         execution_status = StrategyExecutionStatus.RETURN_FUNDS
         exception_cache = None
 

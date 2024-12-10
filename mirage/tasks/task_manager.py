@@ -13,7 +13,7 @@ class TaskManager:
         TaskManager.tasks_queue[group].append(name)
         while True:
             if TaskManager.tasks_queue[group][0] == name:
-                logging.info('Task Manager - can execute task "%s"', name)
+                logging.debug('Task Manager - can execute task "%s"', name)
                 return
 
             await asyncio.sleep(1)

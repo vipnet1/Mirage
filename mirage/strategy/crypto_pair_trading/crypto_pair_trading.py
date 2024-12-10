@@ -5,8 +5,10 @@ from typing import Optional
 import pymongo
 import consts
 from mirage.algorithm.borrow import borrow_algorithm
+from mirage.algorithm.borrow.exceptions import NoLendersException
 from mirage.algorithm.fetch_tickers import fetch_tickers_algorithm
 from mirage.algorithm.simple_order import simple_order_algorithm
+from mirage.channels.channels_manager import ChannelsManager
 from mirage.database.mongo.base_db_record import BaseDbRecord
 from mirage.database.mongo.common_operations import insert_dataclass, update_dataclass
 from mirage.database.mongo.db_config import DbConfig
@@ -15,6 +17,7 @@ from mirage.strategy.pre_execution_status import PARAM_ALLOCATED_PERCENT, PreExe
 from mirage.strategy.strategy import Strategy, StrategyException
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.utils.dict_utils import dataclass_to_dict
+from mirage.utils.multi_logging import log_and_send
 from mirage.utils.symbol_utils import get_base_symbol
 
 
@@ -102,12 +105,12 @@ class CryptoPairTrading(Strategy):
                 raise CryptoPairTradingException(f'Invalid side received {side} with chart pair {pair_raw}')
 
             await self._fetch_coins_amounts(side)
-            # available = await self._get_available_borrow_funds()
-            # if self._borrow_amount > available:
-            #     logging.warning(
-            #         "Can't borrow coin %s. Needed: %s, Available: %s. Ignoring request.", self._borrow_coin, available, self._borrow_amount
-            #     )
-            #     return False
+            if not await self._try_borrow_funds():
+                await log_and_send(
+                    logging.warning, ChannelsManager.get_communication_channel(),
+                    f'No lenders to borrow coin {get_base_symbol(self._shorted_coin)}. Skipping entry.'
+                )
+                return False, None, None
 
         elif action == CryptoPairTrading.ACTION_EXIT:
             if not self._existing_position:
@@ -147,6 +150,24 @@ class CryptoPairTrading(Strategy):
 
         return position_info
 
+    async def _try_borrow_funds(self) -> bool:
+        try:
+            await borrow_algorithm.BorrowAlgorithm(
+                self.capital_flow,
+                self.request_data_id,
+                [
+                    borrow_algorithm.BorrowCommand(
+                        strategy=self.__class__.__name__,
+                        description='Pair trading borrow short coin',
+                        symbol=get_base_symbol(self._shorted_coin),
+                        amount=self._shorted_amount
+                    )
+                ]
+            ).execute()
+            return True
+        except NoLendersException:
+            return False
+
     async def _enter_new_position(self):
         side = self.strategy_data.get(CryptoPairTrading.DATA_SIDE)
 
@@ -174,19 +195,6 @@ class CryptoPairTrading(Strategy):
         )
 
     async def _binance_enter_new_position(self):
-        await borrow_algorithm.BorrowAlgorithm(
-            self.capital_flow,
-            self.request_data_id,
-            [
-                borrow_algorithm.BorrowCommand(
-                    strategy=self.__class__.__name__,
-                    description='Pair trading borrow short coin',
-                    symbol=get_base_symbol(self._shorted_coin),
-                    amount=self._shorted_amount
-                )
-            ]
-        ).execute()
-
         await simple_order_algorithm.SimpleOrderAlgorithm(
             self.capital_flow,
             self.request_data_id,
@@ -324,20 +332,3 @@ class CryptoPairTrading(Strategy):
 
             self._longed_amount *= self._percent_of_allocated
             self._shorted_amount *= self._percent_of_allocated
-
-    # async def _get_available_borrow_funds(self) -> float:
-    #     fta = borrow_algorithm.BorrowAlgorithm(
-    #         self.capital_flow,
-    #         self.request_data_id,
-    #         [
-    #             borrow_algorithm.FetchBalanceCommand(
-    #                 strategy=self.__class__.__name__,
-    #                 description=f'Checking whether enough of coin {self._borrow_coin} to borrow',
-    #             )
-    #         ]
-    #     )
-    #     await fta.execute()
-
-    #     results = fta.command_results[0]
-    #     available = results['borrow'][self._borrow_coin]
-    #     return available

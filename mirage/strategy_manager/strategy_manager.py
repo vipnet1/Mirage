@@ -11,6 +11,7 @@ from mirage.strategy.strategy import Strategy
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.strategy_manager.exceptions import NotEnoughFundsException, StrategyManagerException
 from mirage.tasks.task_manager import TaskManager
+from mirage.utils.multi_logging import log_and_send
 from mirage.utils.variable_reference import VariableReference
 from tools.key_generator import generate_key
 
@@ -90,7 +91,8 @@ class StrategyManager:
             logging.info('Executed strategy successfully')
 
         except NotEnoughFundsException:
-            await ChannelsManager.get_communication_channel().send_message(
+            await log_and_send(
+                logging.warning, ChannelsManager.get_communication_channel(),
                 f'Not enough funds to transfter money to strategy {self._strategy.strategy_name}, instance {self._strategy.strategy_instance}.'
                 + f' Attempted to transfer {transfer_amount}. Consider increasing capital.'
             )

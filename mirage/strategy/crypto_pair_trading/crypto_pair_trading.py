@@ -46,6 +46,7 @@ class CryptoPairTrading(Strategy):
     description = 'Go long & short on pairs. Binance margin account.'
 
     CONFIG_KEY_MAX_LOSS_PERCENT = 'strategy.max_loss_percent'
+    CONFIG_KEY_ALLOWED_MISMANAGEMENT = 'strategy.allowed_mismanagement'
     CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
 
     DATA_ACTION = 'action'
@@ -210,7 +211,8 @@ class CryptoPairTrading(Strategy):
                     amount=self._shorted_amount,
                     price=None
                 )
-            ]
+            ],
+            self.strategy_instance_config.get(CryptoPairTrading.CONFIG_KEY_ALLOWED_MISMANAGEMENT, 0)
         ).execute()
 
     async def _exit_current_position(self, position_info: PositionInfo):
@@ -253,7 +255,8 @@ class CryptoPairTrading(Strategy):
                     amount=self._shorted_amount,
                     price=None
                 )
-            ]
+            ],
+            self.strategy_instance_config.get(CryptoPairTrading.CONFIG_KEY_ALLOWED_MISMANAGEMENT, 0)
         ).execute()
 
         await borrow_algorithm.BorrowAlgorithm(

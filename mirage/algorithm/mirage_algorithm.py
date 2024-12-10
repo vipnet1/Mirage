@@ -25,11 +25,12 @@ class MirageAlgorithm:
 
     description = ''
 
-    def __init__(self, capital_flow: VariableReference, request_data_id: str, commands: list[CommandBase]):
+    def __init__(self, capital_flow: VariableReference, request_data_id: str, commands: list[CommandBase], allowed_mismanagement=0):
         self._capital_flow = capital_flow
         self._request_data_id = request_data_id
         self.commands = commands
         self.command_results = []
+        self._allowed_mismanagement = allowed_mismanagement
 
     @abstractmethod
     async def _process_command(self, command: dataclass) -> None:
@@ -39,7 +40,7 @@ class MirageAlgorithm:
         """
         Use to not accidently go below allocated funds.
         """
-        if self._capital_flow.variable - expected_cost <= 0:
+        if self._capital_flow.variable - expected_cost <= -self._allowed_mismanagement:
             raise MirageAlgorithmException(f'Not enough funds to complete operation! {self.__class__.__name__}. Strategy mismanagement!')
 
     async def execute(self) -> None:

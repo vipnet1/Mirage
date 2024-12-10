@@ -2,19 +2,17 @@ from abc import ABCMeta, abstractmethod
 import logging
 
 import consts
+from mirage.channels.channels_manager import ChannelsManager
 from mirage.config.config_manager import ConfigManager
 from mirage.config.suspend_state import SuspendState
 from mirage.performance.mirage_performance import InputTradePerformance, MiragePerformance
 from mirage.strategy.pre_execution_status import PARAM_ALLOCATED_PERCENT, PreExecutionStatus
 from mirage.strategy.strategy import Strategy
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
+from mirage.strategy_manager.exceptions import NotEnoughFundsException, StrategyManagerException
 from mirage.tasks.task_manager import TaskManager
 from mirage.utils.variable_reference import VariableReference
 from tools.key_generator import generate_key
-
-
-class StrategyManagerException(Exception):
-    pass
 
 
 class StrategyManager:
@@ -90,6 +88,13 @@ class StrategyManager:
 
             execution_status: StrategyExecutionStatus = await self._strategy.execute()
             logging.info('Executed strategy successfully')
+
+        except NotEnoughFundsException:
+            await ChannelsManager.get_communication_channel().send_message(
+                f'Not enough funds to transfter money to strategy {self._strategy.strategy_name}, instance {self._strategy.strategy_instance}.'
+                + f' Attempted to transfer {transfer_amount}. Consider increasing capital.'
+            )
+            return
 
         except Exception as exc:
             logging.error('Exception occurred. Disabling strategy instance.')

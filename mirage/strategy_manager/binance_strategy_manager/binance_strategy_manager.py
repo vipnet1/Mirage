@@ -1,4 +1,7 @@
+from ccxt.base.errors import InsufficientFunds
+
 from mirage.algorithm.transfer.transfer_algorithm import Command, TransferAlgorithm
+from mirage.strategy_manager.exceptions import NotEnoughFundsException
 from mirage.strategy_manager.strategy_manager import StrategyManager, StrategyManagerException
 
 
@@ -21,21 +24,25 @@ class BinanceStrategyManager(StrategyManager):
         wallet = self._strategy.strategy_instance_config.get(self.CONFIG_KEY_WALLET)
         base_currency = self._strategy.strategy_instance_config.get(self.CONFIG_KEY_BASE_CURRENCY)
 
-        await TransferAlgorithm(
-            self._capital_flow,
-            self._strategy.request_data_id,
-            [
-                Command(
-                    strategy=self.__class__.__name__,
-                    description=f'Transfer strategy funds from funding wallet to {wallet} wallet. \
-                    Strategy {self._strategy.strategy_name}, Instance: {self._strategy.strategy_instance}',
-                    asset=base_currency,
-                    amount=amount,
-                    from_wallet=BinanceStrategyManager.FUNDING_WALLET,
-                    to_wallet=wallet
-                )
-            ]
-        ).execute()
+        try:
+            await TransferAlgorithm(
+                self._capital_flow,
+                self._strategy.request_data_id,
+                [
+                    Command(
+                        strategy=self.__class__.__name__,
+                        description=f'Transfer strategy funds from funding wallet to {wallet} wallet. \
+                        Strategy {self._strategy.strategy_name}, Instance: {self._strategy.strategy_instance}',
+                        asset=base_currency,
+                        amount=amount,
+                        from_wallet=BinanceStrategyManager.FUNDING_WALLET,
+                        to_wallet=wallet
+                    )
+                ]
+            ).execute()
+
+        except InsufficientFunds:
+            raise NotEnoughFundsException() from InsufficientFunds
 
     async def _transfer_capital_from_strategy(self) -> None:
         wallet = self._strategy.strategy_instance_config.get(BinanceStrategyManager.CONFIG_KEY_WALLET)

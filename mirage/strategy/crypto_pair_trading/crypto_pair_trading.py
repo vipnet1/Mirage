@@ -49,7 +49,6 @@ class CryptoPairTrading(Strategy):
     description = 'Go long & short on pairs. Binance margin account.'
 
     CONFIG_KEY_MAX_LOSS_PERCENT = 'strategy.max_loss_percent'
-    CONFIG_KEY_ALLOWED_MISMANAGEMENT = 'strategy.allowed_mismanagement'
     CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
 
     DATA_ACTION = 'action'
@@ -195,20 +194,11 @@ class CryptoPairTrading(Strategy):
         )
 
     async def _binance_enter_new_position(self):
+        # We first sell then buy to not go into negative funds zone and get exception
         await simple_order_algorithm.SimpleOrderAlgorithm(
             self.capital_flow,
             self.request_data_id,
             [
-                simple_order_algorithm.CommandAmount(
-                    strategy=self.__class__.__name__,
-                    description='Pair trading long coin',
-                    wallet=simple_order_algorithm.SimpleOrderAlgorithm.WALLET_MARGIN,
-                    type=simple_order_algorithm.SimpleOrderAlgorithm.TYPE_MARKET,
-                    symbol=self._longed_coin,
-                    operation=simple_order_algorithm.SimpleOrderAlgorithm.OPERATION_BUY,
-                    amount=self._longed_amount,
-                    price=None
-                ),
                 simple_order_algorithm.CommandAmount(
                     strategy=self.__class__.__name__,
                     description='Pair trading short coin',
@@ -218,9 +208,18 @@ class CryptoPairTrading(Strategy):
                     operation=simple_order_algorithm.SimpleOrderAlgorithm.OPERATION_SELL,
                     amount=self._shorted_amount,
                     price=None
+                ),
+                simple_order_algorithm.CommandAmount(
+                    strategy=self.__class__.__name__,
+                    description='Pair trading long coin',
+                    wallet=simple_order_algorithm.SimpleOrderAlgorithm.WALLET_MARGIN,
+                    type=simple_order_algorithm.SimpleOrderAlgorithm.TYPE_MARKET,
+                    symbol=self._longed_coin,
+                    operation=simple_order_algorithm.SimpleOrderAlgorithm.OPERATION_BUY,
+                    amount=self._longed_amount,
+                    price=None
                 )
             ],
-            self.strategy_instance_config.get(CryptoPairTrading.CONFIG_KEY_ALLOWED_MISMANAGEMENT, 0)
         ).execute()
 
     async def _exit_current_position(self, position_info: PositionInfo):
@@ -264,7 +263,6 @@ class CryptoPairTrading(Strategy):
                     price=None
                 )
             ],
-            self.strategy_instance_config.get(CryptoPairTrading.CONFIG_KEY_ALLOWED_MISMANAGEMENT, 0)
         ).execute()
 
         await borrow_algorithm.BorrowAlgorithm(

@@ -48,7 +48,7 @@ class PositionInfo(BaseDbRecord):
 class CryptoPairTrading(Strategy):
     description = 'Go long & short on pairs. Binance margin account.'
 
-    NOTIFY_BIG_RATIO_PERCENT = 20
+    NOTIFY_BIG_RATIO_PERCENT = 30
 
     CONFIG_KEY_MAX_LOSS_PERCENT = 'strategy.max_loss_percent'
     CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
@@ -340,6 +340,7 @@ class CryptoPairTrading(Strategy):
 
             long_amount *= capital_ratio
             short_amount *= capital_ratio
+            capital_ratio = 1
 
         capital_diff = abs(long_capital / short_capital) * 100
         if capital_diff < 100 - CryptoPairTrading.NOTIFY_BIG_RATIO_PERCENT or 100 + CryptoPairTrading.NOTIFY_BIG_RATIO_PERCENT < capital_diff:
@@ -351,4 +352,4 @@ class CryptoPairTrading(Strategy):
 
         self._longed_amount = long_amount
         self._shorted_amount = short_amount
-        self._percent_of_allocated = capital_ratio
+        self._percent_of_allocated = 1 / capital_ratio

@@ -12,6 +12,10 @@ class StrategyException(Exception):
     pass
 
 
+class StrategySilentException(StrategyException):
+    pass
+
+
 class Strategy:
     __metaclass__ = ABCMeta
 

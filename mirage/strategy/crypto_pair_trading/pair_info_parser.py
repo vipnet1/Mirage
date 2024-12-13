@@ -40,11 +40,15 @@ class PairInfoParser():
         return symbol, ratio
 
     def _remove_exchange_name(self, pair: str) -> str:
-        splitted_pair = pair.split(':')
-        if len(splitted_pair) == 1:
-            return splitted_pair[0]
+        star = pair.find('*')
+        colon = pair.find(':')
+        if colon == -1:
+            return pair
 
-        return splitted_pair[1]
+        if star != -1 and star < colon:
+            return pair[0:star+1] + pair[colon+1:]
+
+        return pair[colon+1:]
 
     def _add_slash_to_pair(self, pair: str) -> str:
         base_currency = pair.replace(self._base_currency, "")

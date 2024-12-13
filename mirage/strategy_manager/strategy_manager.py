@@ -7,7 +7,7 @@ from mirage.config.config_manager import ConfigManager
 from mirage.config.suspend_state import SuspendState
 from mirage.performance.mirage_performance import InputTradePerformance, MiragePerformance
 from mirage.strategy.pre_execution_status import PARAM_ALLOCATED_PERCENT, PreExecutionStatus
-from mirage.strategy.strategy import Strategy
+from mirage.strategy.strategy import Strategy, StrategySilentException
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.strategy_manager.exceptions import NotEnoughFundsException, StrategyManagerException
 from mirage.tasks.task_manager import TaskManager
@@ -97,6 +97,9 @@ class StrategyManager:
                 + f' Attempted to transfer {transfer_amount}. Consider increasing capital.'
             )
             return
+
+        except StrategySilentException:
+            logging.error('Strategy execution silent exception occurred')
 
         except Exception as exc:
             logging.error('Exception occurred. Disabling strategy instance.')

@@ -14,7 +14,7 @@ from mirage.database.mongo.common_operations import insert_dataclass, update_dat
 from mirage.database.mongo.db_config import DbConfig
 from mirage.strategy.crypto_pair_trading.pair_info_parser import PairInfoParser
 from mirage.strategy.pre_execution_status import PARAM_ALLOCATED_PERCENT, PreExecutionStatus
-from mirage.strategy.strategy import Strategy, StrategyException
+from mirage.strategy.strategy import Strategy, StrategyException, StrategySilentException
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.utils.dict_utils import dataclass_to_dict
 from mirage.utils.multi_logging import log_and_send
@@ -22,6 +22,10 @@ from mirage.utils.symbol_utils import get_base_symbol
 
 
 class CryptoPairTradingException(StrategyException):
+    pass
+
+
+class SilentCryptoPairTradingException(StrategySilentException):
     pass
 
 
@@ -106,12 +110,6 @@ class CryptoPairTrading(Strategy):
                 raise CryptoPairTradingException(f'Invalid side received {side} with chart pair {pair_raw}')
 
             await self._fetch_coins_amounts(side)
-            if not await self._try_borrow_funds():
-                await log_and_send(
-                    logging.warning, ChannelsManager.get_communication_channel(),
-                    f'No lenders to borrow coin {get_base_symbol(self._shorted_coin)}. Skipping entry.'
-                )
-                return False, None, None
 
         elif action == CryptoPairTrading.ACTION_EXIT:
             if not self._existing_position:
@@ -132,6 +130,7 @@ class CryptoPairTrading(Strategy):
 
         action = self.strategy_data.get(CryptoPairTrading.DATA_ACTION)
         if action == CryptoPairTrading.ACTION_ENTRY:
+            await self._try_borrow_funds()
             await self._enter_new_position()
             return StrategyExecutionStatus.ONGOING
         elif action == CryptoPairTrading.ACTION_EXIT:
@@ -151,7 +150,7 @@ class CryptoPairTrading(Strategy):
 
         return position_info
 
-    async def _try_borrow_funds(self) -> bool:
+    async def _try_borrow_funds(self) -> None:
         try:
             await borrow_algorithm.BorrowAlgorithm(
                 self.capital_flow,
@@ -165,9 +164,12 @@ class CryptoPairTrading(Strategy):
                     )
                 ]
             ).execute()
-            return True
-        except NoLendersException:
-            return False
+        except NoLendersException as exc:
+            await log_and_send(
+                logging.warning, ChannelsManager.get_communication_channel(),
+                f'No lenders to borrow coin {get_base_symbol(self._shorted_coin)}. Skipping entry.'
+            )
+            raise SilentCryptoPairTradingException() from exc
 
     async def _enter_new_position(self):
         side = self.strategy_data.get(CryptoPairTrading.DATA_SIDE)
@@ -340,13 +342,16 @@ class CryptoPairTrading(Strategy):
 
             long_amount *= capital_ratio
             short_amount *= capital_ratio
+            long_capital *= capital_ratio
+            short_capital *= capital_ratio
+            total_capital *= capital_ratio
             capital_ratio = 1
 
         capital_diff = abs(long_capital / short_capital) * 100
         if capital_diff < 100 - CryptoPairTrading.NOTIFY_BIG_RATIO_PERCENT or 100 + CryptoPairTrading.NOTIFY_BIG_RATIO_PERCENT < capital_diff:
             await log_and_send(
                 logging.warning, ChannelsManager.get_communication_channel(),
-                f'Difference between bought coins {self._longed_coin}, {self._shorted_coin} is to big: {capital_diff}%. '
+                f'Difference between bought coins {self._longed_coin}, {self._shorted_coin} is too big: {capital_diff}%. '
                 f'Still entering position, but consider changing chart ratio to remain market neutral.'
             )
 

@@ -48,6 +48,8 @@ class PositionInfo(BaseDbRecord):
 class CryptoPairTrading(Strategy):
     description = 'Go long & short on pairs. Binance margin account.'
 
+    NOTIFY_BIG_RATIO_PERCENT = 20
+
     CONFIG_KEY_MAX_LOSS_PERCENT = 'strategy.max_loss_percent'
     CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
 
@@ -309,24 +311,44 @@ class CryptoPairTrading(Strategy):
         longed_coin_price = results[self._longed_coin]['last']
         shorted_coin_price = results[self._shorted_coin]['last']
 
-        self._calculate_coins_amounts(longed_coin_price, shorted_coin_price)
+        await self._calculate_coins_amounts(longed_coin_price, shorted_coin_price)
 
-    def _calculate_coins_amounts(self, longed_coin_price: float, shorted_coin_price: float) -> None:
-        # If have 70$ funds, allow borrow 70$ for shorting. Meaning can enter 140$ positions in total.
-        self._longed_amount = self.allocated_capital.variable / longed_coin_price
-        self._shorted_amount = self.allocated_capital.variable / shorted_coin_price
-
-        # Check if should reduce positions because of risk management
+    async def _calculate_coins_amounts(self, longed_coin_price: float, shorted_coin_price: float) -> None:
         price = self.strategy_data.get(CryptoPairTrading.DATA_PRICE)
         stoploss = self.strategy_data.get(CryptoPairTrading.DATA_STOPLOSS_PRICE)
         max_loss_percent = self.strategy_instance_config.get(CryptoPairTrading.CONFIG_KEY_MAX_LOSS_PERCENT)
 
-        amount_want_to_buy = self.allocated_capital.variable / price
+        # max amount to meet stoploss percent lose
         max_amount_can_buy = ((max_loss_percent / 100) * self.allocated_capital.variable) / abs(price - stoploss)
 
-        if amount_want_to_buy > max_amount_can_buy:
-            self._percent_of_allocated = max_amount_can_buy / amount_want_to_buy
-            logging.info('Reducing position to manage risk. Entering with %s%s of available amount.', str(self._percent_of_allocated * 100), '%')
+        long_amount = max_amount_can_buy
+        short_amount = max_amount_can_buy
 
-            self._longed_amount *= self._percent_of_allocated
-            self._shorted_amount *= self._percent_of_allocated
+        if self._shorted_coin == self._pair_info.second_pair:
+            short_amount *= self._pair_info.ratio
+        else:
+            long_amount *= self._pair_info.ratio
+
+        long_capital = long_amount * longed_coin_price
+        short_capital = short_amount * shorted_coin_price
+        total_capital = long_capital + short_capital
+
+        # if need to spend more than allocated reduce it
+        capital_ratio = self.allocated_capital.variable / total_capital
+        if capital_ratio < 1:
+            logging.info('Reducing position to manage risk. Entering with %s%s of available amount.', str(capital_ratio * 100), '%')
+
+            long_amount *= capital_ratio
+            short_amount *= capital_ratio
+
+        capital_diff = abs(long_capital / short_capital) * 100
+        if capital_diff < 100 - CryptoPairTrading.NOTIFY_BIG_RATIO_PERCENT or 100 + CryptoPairTrading.NOTIFY_BIG_RATIO_PERCENT < capital_diff:
+            await log_and_send(
+                logging.warning, ChannelsManager.get_communication_channel(),
+                f'Difference between bought coins {self._longed_coin}, {self._shorted_coin} is to big: {capital_diff}%. '
+                f'Still entering position, but consider changing chart ratio to remain market neutral.'
+            )
+
+        self._longed_amount = long_amount
+        self._shorted_amount = short_amount
+        self._percent_of_allocated = capital_ratio

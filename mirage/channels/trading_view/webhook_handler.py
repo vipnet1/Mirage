@@ -3,7 +3,6 @@ import consts
 
 from mirage.channels.trading_view.exceptions import WebhookRequestException
 from mirage.channels.trading_view.request_json import RequestJson
-from mirage.config.config_manager import ConfigManager
 from mirage.database.mongo.common_operations import insert_dict
 from mirage.strategy_manager.strategy_manager import StrategyManager
 from mirage.strategy.strategy import Strategy

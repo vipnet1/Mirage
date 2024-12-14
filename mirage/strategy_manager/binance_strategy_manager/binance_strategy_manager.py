@@ -81,4 +81,8 @@ class BinanceStrategyManager(StrategyManager):
 
         results = fba.command_results[0]
         base_currency = self._strategy.strategy_instance_config.get(BinanceStrategyManager.CONFIG_KEY_BASE_CURRENCY)
+
+        if base_currency not in results:
+            return 0
+
         return results[base_currency]['free']

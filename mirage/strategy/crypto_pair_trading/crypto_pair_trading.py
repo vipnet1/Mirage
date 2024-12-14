@@ -56,8 +56,8 @@ class CryptoPairTrading(Strategy):
     description = 'Go long & short on pairs. Binance margin account.'
 
     NOTIFY_BIG_RATIO_PERCENT = 30
-    # As someitimes get error that want to transfer more than available etc, reduce bit all calculated positions.
-    POSITION_REDUCTION = 0.9999
+    # As someitimes get error that want to transfer more than available etc, reduce by a bit all calculated positions.
+    POSITION_REDUCTION = 0.99999
 
     CONFIG_KEY_MAX_LOSS_PERCENT = 'strategy.max_loss_percent'
     CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
@@ -73,6 +73,12 @@ class CryptoPairTrading(Strategy):
 
     SIDE_LONG = 'long'
     SIDE_SHORT = 'short'
+
+    ACTION_PARAM_NAME = 'name'
+
+    ACTION_NAME_BORROWED = 'borrowed'
+    ACTION_NAME_SOLD = 'sold'
+    ACTION_NAME_BOUGHT = 'bought'
 
     def __init__(
             self,
@@ -169,6 +175,9 @@ class CryptoPairTrading(Strategy):
                     )
                 ]
             ).execute()
+            self._actions_track.append({
+                CryptoPairTrading.ACTION_PARAM_NAME: CryptoPairTrading.ACTION_NAME_BORROWED
+            })
         except NoLendersException as exc:
             await log_and_send(
                 logging.warning, ChannelsManager.get_communication_channel(),
@@ -202,20 +211,21 @@ class CryptoPairTrading(Strategy):
 
     async def _binance_enter_new_position(self):
         # We first sell then buy to not go into negative funds zone and get exception
+        await self._entry_sell_short_coins()
+        self._actions_track.append({
+            CryptoPairTrading.ACTION_PARAM_NAME: CryptoPairTrading.ACTION_NAME_SOLD
+        })
+
+        await self._entry_buy_long_coins()
+        self._actions_track.append({
+            CryptoPairTrading.ACTION_PARAM_NAME: CryptoPairTrading.ACTION_NAME_BOUGHT
+        })
+
+    async def _entry_buy_long_coins(self):
         await simple_order_algorithm.SimpleOrderAlgorithm(
             self.capital_flow,
             self.request_data_id,
             [
-                simple_order_algorithm.CommandAmount(
-                    strategy=self.__class__.__name__,
-                    description='Pair trading short coin',
-                    wallet=simple_order_algorithm.SimpleOrderAlgorithm.WALLET_MARGIN,
-                    type=simple_order_algorithm.SimpleOrderAlgorithm.TYPE_MARKET,
-                    symbol=self._shorted_coin,
-                    operation=simple_order_algorithm.SimpleOrderAlgorithm.OPERATION_SELL,
-                    amount=self._shorted_amount,
-                    price=None
-                ),
                 simple_order_algorithm.CommandAmount(
                     strategy=self.__class__.__name__,
                     description='Pair trading long coin',
@@ -229,8 +239,28 @@ class CryptoPairTrading(Strategy):
             ],
         ).execute()
 
+    async def _entry_sell_short_coins(self):
+        await simple_order_algorithm.SimpleOrderAlgorithm(
+            self.capital_flow,
+            self.request_data_id,
+            [
+                simple_order_algorithm.CommandAmount(
+                    strategy=self.__class__.__name__,
+                    description='Pair trading short coin',
+                    wallet=simple_order_algorithm.SimpleOrderAlgorithm.WALLET_MARGIN,
+                    type=simple_order_algorithm.SimpleOrderAlgorithm.TYPE_MARKET,
+                    symbol=self._shorted_coin,
+                    operation=simple_order_algorithm.SimpleOrderAlgorithm.OPERATION_SELL,
+                    amount=self._shorted_amount,
+                    price=None
+                )
+            ],
+        ).execute()
+
     async def _exit_current_position(self, position_info: PositionInfo):
-        await self._binance_exit_current_position()
+        await self._exit_sell_longed_coins()
+        await self._exit_buy_shorted_coins()
+        await self._repay_borrowed_funds()
 
         update_dataclass(
             consts.DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING,
@@ -239,7 +269,7 @@ class CryptoPairTrading(Strategy):
             PositionInfo(is_open=False)
         )
 
-    async def _binance_exit_current_position(self):
+    async def _exit_sell_longed_coins(self):
         await simple_order_algorithm.SimpleOrderAlgorithm(
             self.capital_flow,
             self.request_data_id,
@@ -253,7 +283,15 @@ class CryptoPairTrading(Strategy):
                     operation=simple_order_algorithm.SimpleOrderAlgorithm.OPERATION_SELL,
                     amount=self._longed_amount,
                     price=None
-                ),
+                )
+            ],
+        ).execute()
+
+    async def _exit_buy_shorted_coins(self):
+        await simple_order_algorithm.SimpleOrderAlgorithm(
+            self.capital_flow,
+            self.request_data_id,
+            [
                 simple_order_algorithm.CommandAmount(
                     strategy=self.__class__.__name__,
                     description='Pair trading buy shorted coin',
@@ -267,6 +305,7 @@ class CryptoPairTrading(Strategy):
             ],
         ).execute()
 
+    async def _repay_borrowed_funds(self):
         await borrow_algorithm.BorrowAlgorithm(
             self.capital_flow,
             self.request_data_id,
@@ -359,3 +398,22 @@ class CryptoPairTrading(Strategy):
         self._longed_amount = long_amount * CryptoPairTrading.POSITION_REDUCTION
         self._shorted_amount = short_amount * CryptoPairTrading.POSITION_REDUCTION
         self._transfer_amount = long_capital * CryptoPairTrading.POSITION_REDUCTION
+
+    async def _exception_revert_internal(self) -> bool:
+        data_action = self.strategy_data.get(CryptoPairTrading.DATA_ACTION)
+        if data_action != CryptoPairTrading.ACTION_ENTRY:
+            return False
+
+        for action_params in reversed(self._actions_track):
+            param_name = action_params[CryptoPairTrading.ACTION_PARAM_NAME]
+
+            if param_name == CryptoPairTrading.ACTION_NAME_BOUGHT:
+                await self._exit_sell_longed_coins()
+
+            if param_name == CryptoPairTrading.ACTION_NAME_SOLD:
+                await self._exit_buy_shorted_coins()
+
+            if param_name == CryptoPairTrading.ACTION_NAME_BORROWED:
+                await self._repay_borrowed_funds()
+
+        return True

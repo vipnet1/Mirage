@@ -1,10 +1,13 @@
 from abc import ABCMeta, abstractmethod
 import logging
+import traceback
 
+from mirage.channels.channels_manager import ChannelsManager
 from mirage.config.config_manager import ConfigManager
 from mirage.strategy.pre_execution_status import PreExecutionStatus
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.utils.mirage_dict import MirageDict
+from mirage.utils.multi_logging import log_and_send
 from mirage.utils.variable_reference import VariableReference
 
 
@@ -39,6 +42,8 @@ class Strategy:
         self.strategy_capital: VariableReference = None
         self.capital_flow: VariableReference = None
 
+        self._actions_track = []
+
     @abstractmethod
     async def should_execute_strategy(self, available_capital: float) -> tuple[bool, PreExecutionStatus, dict[str, any]]:
         """
@@ -55,5 +60,28 @@ class Strategy:
     def is_entry(self) -> bool:
         """
         Whether entry or not. To block entry signals and allow exit in case of suspention.
+        """
+        raise NotImplementedError()
+
+    async def exception_revert(self) -> None:
+        logging.warning('Doing exception revert for strategy %s, instance %s', self.strategy_name, self.strategy_instance)
+
+        try:
+            status = await self._exception_revert_internal()
+            log_and_send(
+                logging.warning, ChannelsManager.get_communication_channel(),
+                'Exception revert successfull' if status else 'Exception revert failed'
+            )
+
+        except Exception:
+            log_and_send(
+                logging.error, ChannelsManager.get_communication_channel(),
+                f'Exception during exception revert:\n {traceback.format_exc()}'
+            )
+
+    @abstractmethod
+    async def _exception_revert_internal(self) -> bool:
+        """
+        When exception occurrs, try revent stuff to position before trade so can refund funds.
         """
         raise NotImplementedError()

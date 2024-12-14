@@ -37,3 +37,6 @@ class BuyBtc(Strategy):
             ]
         ).execute()
         return StrategyExecutionStatus.RETURN_FUNDS
+
+    async def _exception_revert_internal(self) -> bool:
+        return True

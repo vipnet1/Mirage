@@ -14,9 +14,19 @@ enabled_commands: dict[str, TelegramCommand] = {
     'performance-summary': PerformaceSummaryCommand,
 }
 
+_TERMINATE = 'update-config\nexecution\n{"terminate": true}'
+_SUSPEND_TRADES = 'update-config\nexecution\n{"suspend": "' + SuspendState.TRADES.value + '"}'
+_SUSPEND_ENTRY = 'update-config\nexecution\n{"suspend": "' + SuspendState.ENTRY.value + '"}'
+_UNSUSPEND = 'update-config\nexecution\n{"suspend": "' + SuspendState.NONE.value + '"}'
+
 enabled_aliases: dict[str, str] = {
-    'terminate': 'update-config\nexecution\n{"terminate": true}',
-    'suspend-trades': 'update-config\nexecution\n{"suspend": "' + SuspendState.TRADES.value + '"}',
-    'suspend-entry': 'update-config\nexecution\n{"suspend": "' + SuspendState.ENTRY.value + '"}',
-    'unsuspend': 'update-config\nexecution\n{"suspend": "' + SuspendState.NONE.value + '"}',
+    'terminate': _TERMINATE,
+    'suspend-trades': _SUSPEND_TRADES,
+    'suspend-entry': _SUSPEND_ENTRY,
+    'unsuspend': _UNSUSPEND,
+
+    'trm': _TERMINATE,
+    'spt': _SUSPEND_TRADES,
+    'spe': _SUSPEND_ENTRY,
+    'uns': _UNSUSPEND
 }

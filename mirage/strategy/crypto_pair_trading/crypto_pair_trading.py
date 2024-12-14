@@ -175,13 +175,9 @@ class CryptoPairTrading(Strategy):
             raise SilentCryptoPairTradingException() from exc
 
     async def _enter_new_position(self):
+        await self._binance_enter_new_position()
+
         side = self.strategy_data.get(CryptoPairTrading.DATA_SIDE)
-
-        if side == CryptoPairTrading.SIDE_LONG:
-            await self._binance_enter_new_position()
-        else:
-            await self._binance_enter_new_position()
-
         pair = get_base_symbol(self._pair_info.first_pair) + '/' + get_base_symbol(self._pair_info.second_pair)
         insert_dataclass(
             consts.DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING,
@@ -232,12 +228,7 @@ class CryptoPairTrading(Strategy):
         ).execute()
 
     async def _exit_current_position(self, position_info: PositionInfo):
-        if position_info.side == CryptoPairTrading.SIDE_LONG:
-            await self._binance_exit_current_position()
-        elif position_info.side == CryptoPairTrading.SIDE_SHORT:
-            await self._binance_exit_current_position()
-        else:
-            raise CryptoPairTradingException(f'Invalid side when exiting position {position_info.side}')
+        await self._binance_exit_current_position()
 
         update_dataclass(
             consts.DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING,
@@ -318,6 +309,9 @@ class CryptoPairTrading(Strategy):
         longed_coin_price = results[self._longed_coin]['last']
         shorted_coin_price = results[self._shorted_coin]['last']
 
+        logging.info('Longed coin %s price: %s', self._longed_coin, longed_coin_price)
+        logging.info('Shorted coin %s price: %s', self._shorted_coin, shorted_coin_price)
+
         await self._calculate_coins_amounts(longed_coin_price, shorted_coin_price, available_capital)
 
     async def _calculate_coins_amounts(self, longed_coin_price: float, shorted_coin_price: float, available_capital: float) -> None:
@@ -344,7 +338,7 @@ class CryptoPairTrading(Strategy):
         # if need to spend more than available reduce it.
         capital_ratio = available_capital / long_capital
         if capital_ratio < 1:
-            logging.info('Reducing position to manage risk. Entering with %s%s of available amount.', str(capital_ratio * 100), '%')
+            logging.info('Reducing position to match available capital. Wanted to transfer: %s, Available: %s.', long_capital, available_capital)
 
             long_amount *= capital_ratio
             short_amount *= capital_ratio

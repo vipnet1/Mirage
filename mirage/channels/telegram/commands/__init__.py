@@ -1,3 +1,4 @@
+import consts
 from mirage.channels.telegram.commands.performance.show_summary import PerformaceSummaryCommand
 from mirage.channels.telegram.telegram_command import TelegramCommand
 from mirage.channels.telegram.commands.backup import BackupCommand
@@ -6,18 +7,25 @@ from mirage.channels.telegram.commands.config.show_config import ShowConfigComma
 from mirage.channels.telegram.commands.config.update_config import UpdateConfigCommand
 from mirage.config.suspend_state import SuspendState
 
+_SHOW_CONFIG = 'show-config'
+_PERFORMANCE_SUMMARY = 'performance-summary'
+_UPDATE_CONFIG = 'update-config'
+
+_TERMINATE = f'{_UPDATE_CONFIG}\n{UpdateConfigCommand.CONFIG_NAME_EXECUTION}\n{{"{consts.EXECUTION_CONFIG_KEY_TERMINATE}": true}}'
+_SUSPEND_TRADES = f'{_UPDATE_CONFIG}\n{UpdateConfigCommand.CONFIG_NAME_EXECUTION}\n \
+    {{"{consts.EXECUTION_CONFIG_KEY_SUSPEND}": "{SuspendState.TRADES.value}"}}'
+_SUSPEND_ENTRY = f'{_UPDATE_CONFIG}\n{UpdateConfigCommand.CONFIG_NAME_EXECUTION}\n \
+    {{"{consts.EXECUTION_CONFIG_KEY_SUSPEND}": "{SuspendState.ENTRY.value}"}}'
+_UNSUSPEND = f'{_UPDATE_CONFIG}\n{UpdateConfigCommand.CONFIG_NAME_EXECUTION}\n \
+    {{"{consts.EXECUTION_CONFIG_KEY_SUSPEND}": "{SuspendState.NONE.value}"}}'
+
 enabled_commands: dict[str, TelegramCommand] = {
     'backup': BackupCommand,
     'override-config': OverrideConfigCommand,
-    'show-config': ShowConfigCommand,
-    'update-config': UpdateConfigCommand,
-    'performance-summary': PerformaceSummaryCommand,
+    _SHOW_CONFIG: ShowConfigCommand,
+    _UPDATE_CONFIG: UpdateConfigCommand,
+    _PERFORMANCE_SUMMARY: PerformaceSummaryCommand,
 }
-
-_TERMINATE = 'update-config\nexecution\n{"terminate": true}'
-_SUSPEND_TRADES = 'update-config\nexecution\n{"suspend": "' + SuspendState.TRADES.value + '"}'
-_SUSPEND_ENTRY = 'update-config\nexecution\n{"suspend": "' + SuspendState.ENTRY.value + '"}'
-_UNSUSPEND = 'update-config\nexecution\n{"suspend": "' + SuspendState.NONE.value + '"}'
 
 enabled_aliases: dict[str, str] = {
     'terminate': _TERMINATE,
@@ -28,5 +36,7 @@ enabled_aliases: dict[str, str] = {
     'trm': _TERMINATE,
     'spt': _SUSPEND_TRADES,
     'spe': _SUSPEND_ENTRY,
-    'uns': _UNSUSPEND
+    'uns': _UNSUSPEND,
+    'shc': _SHOW_CONFIG,
+    'pfs': _PERFORMANCE_SUMMARY
 }

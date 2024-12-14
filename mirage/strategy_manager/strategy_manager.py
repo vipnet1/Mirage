@@ -31,6 +31,8 @@ class StrategyManager:
     CONFIG_KEY_CAPITAL_FLOW = 'strategy_manager.capital_flow'
     # How many additional money can give for trade. Risk management should not consider this for calculations.
     CONFIG_KEY_CAPITAL_POOL = 'strategy_manager.capital_pool'
+    # If less than this amount available do not enter trade
+    CONFIG_KEY_MIN_ENTRY_CAPITAL = 'strategy_manager.min_entry_capital'
 
     CONFIG_KEY_IS_ACTIVE = 'strategy_manager.is_active'
 
@@ -84,6 +86,14 @@ class StrategyManager:
             available_capital = -1
             if is_entry:
                 available_capital = await self._get_amount_can_transfer()
+                min_entry_capital = self._strategy.strategy_instance_config.get(self.CONFIG_KEY_MIN_ENTRY_CAPITAL)
+                if available_capital < min_entry_capital:
+                    await log_and_send(
+                        logging.warning, ChannelsManager.get_communication_channel(),
+                        f'Not enough funds to transfter money to strategy {self._strategy.strategy_name}, instance {self._strategy.strategy_instance}'
+                        + f'. Minimal amount {min_entry_capital}. Consider increasing capital.'
+                    )
+                    return
 
             should_trade, status, params = await self._strategy.should_execute_strategy(available_capital)
             if not should_trade:
@@ -94,8 +104,8 @@ class StrategyManager:
                 transfer_amount = params[PARAM_TRANSFER_AMOUNT]
                 if transfer_amount > available_capital:
                     await log_send_raise(
-                        logging.error, ChannelsManager.get_communication_channel(), StrategyManagerException,
-                        f'Trying to transfer {transfer_amount} of base currency, when max available is {available_capital}'
+                        logging.error, ChannelsManager.get_communication_channel(), NotEnoughFundsException,
+                        f'Strategy wants to transfer {transfer_amount} of base currency, when max given is {available_capital}'
                     )
 
             await self._maybe_transfer_capital_to_strategy(transfer_amount)
@@ -105,14 +115,6 @@ class StrategyManager:
 
             execution_status: StrategyExecutionStatus = await self._strategy.execute()
             logging.info('Executed strategy successfully')
-
-        except NotEnoughFundsException:
-            await log_and_send(
-                logging.warning, ChannelsManager.get_communication_channel(),
-                f'Not enough funds to transfter money to strategy {self._strategy.strategy_name}, instance {self._strategy.strategy_instance}.'
-                + f' Attempted to transfer {transfer_amount}. Consider increasing capital.'
-            )
-            return
 
         except StrategySilentException:
             logging.error('Strategy execution silent exception occurred')

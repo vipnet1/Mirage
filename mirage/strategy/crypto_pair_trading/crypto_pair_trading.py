@@ -340,8 +340,9 @@ class CryptoPairTrading(Strategy):
         short_capital = short_amount * shorted_coin_price
         total_capital = long_capital + short_capital
 
-        # if need to spend more than available reduce it
-        capital_ratio = available_capital / total_capital
+        # We transfer only long capital, as short we should be able to borrow with the transferred long.
+        # if need to spend more than available reduce it.
+        capital_ratio = available_capital / long_capital
         if capital_ratio < 1:
             logging.info('Reducing position to manage risk. Entering with %s%s of available amount.', str(capital_ratio * 100), '%')
 
@@ -350,7 +351,6 @@ class CryptoPairTrading(Strategy):
             long_capital *= capital_ratio
             short_capital *= capital_ratio
             total_capital *= capital_ratio
-            capital_ratio = 1
 
         capital_diff = abs(long_capital / short_capital) * 100
         if capital_diff < 100 - CryptoPairTrading.NOTIFY_BIG_RATIO_PERCENT or 100 + CryptoPairTrading.NOTIFY_BIG_RATIO_PERCENT < capital_diff:
@@ -362,4 +362,4 @@ class CryptoPairTrading(Strategy):
 
         self._longed_amount = long_amount
         self._shorted_amount = short_amount
-        self._transfer_amount = total_capital
+        self._transfer_amount = long_capital

@@ -48,7 +48,7 @@ class BinanceStrategyManager(StrategyManager):
 
     async def _transfer_capital_from_strategy(self) -> None:
         wallet = self._strategy.strategy_instance_config.get(BinanceStrategyManager.CONFIG_KEY_WALLET)
-        base_currency = self._strategy.strategy_instance_config.get(BinanceStrategyManager.CONFIG_KEY_BASE_CURRENCY)
+        base_currency = self._strategy.strategy_instance_config.get(self.CONFIG_KEY_BASE_CURRENCY)
 
         await TransferAlgorithm(
             self._capital_flow,
@@ -66,7 +66,7 @@ class BinanceStrategyManager(StrategyManager):
         ).execute()
 
     async def _fetch_balance(self) -> Balances:
-        fba = await fetch_balance_algorithm.FetchBalanceAlgorithm(
+        fba = fetch_balance_algorithm.FetchBalanceAlgorithm(
             self._capital_flow,
             self._strategy.request_data_id,
             [
@@ -76,7 +76,9 @@ class BinanceStrategyManager(StrategyManager):
                     wallet=BinanceStrategyManager.FUNDING_WALLET,
                 )
             ]
-        ).execute()
+        )
+        await fba.execute()
 
         results = fba.command_results[0]
-        return results[BinanceStrategyManager.CONFIG_KEY_BASE_CURRENCY]['totalWalletBalance']
+        base_currency = self._strategy.strategy_instance_config.get(BinanceStrategyManager.CONFIG_KEY_BASE_CURRENCY)
+        return results[base_currency]['free']

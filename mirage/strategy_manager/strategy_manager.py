@@ -90,7 +90,7 @@ class StrategyManager:
                 return
 
             transfer_amount = self._allocated_capital.variable
-            if status == PreExecutionStatus.PARTIAL_ALLOCATION:
+            if is_entry and status == PreExecutionStatus.PARTIAL_ALLOCATION:
                 transfer_amount = params[PARAM_TRANSFER_AMOUNT]
                 if transfer_amount > available_capital:
                     await log_send_raise(

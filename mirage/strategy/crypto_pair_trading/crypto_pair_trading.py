@@ -56,6 +56,8 @@ class CryptoPairTrading(Strategy):
     description = 'Go long & short on pairs. Binance margin account.'
 
     NOTIFY_BIG_RATIO_PERCENT = 30
+    # As someitimes get error that want to transfer more than available etc, reduce bit all calculated positions.
+    POSITION_REDUCTION = 0.9999
 
     CONFIG_KEY_MAX_LOSS_PERCENT = 'strategy.max_loss_percent'
     CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
@@ -354,6 +356,6 @@ class CryptoPairTrading(Strategy):
                 f'Still entering position, but consider changing chart ratio to remain market neutral.'
             )
 
-        self._longed_amount = long_amount
-        self._shorted_amount = short_amount
-        self._transfer_amount = long_capital
+        self._longed_amount = long_amount * CryptoPairTrading.POSITION_REDUCTION
+        self._shorted_amount = short_amount * CryptoPairTrading.POSITION_REDUCTION
+        self._transfer_amount = long_capital * CryptoPairTrading.POSITION_REDUCTION

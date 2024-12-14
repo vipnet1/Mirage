@@ -37,6 +37,6 @@ enabled_aliases: dict[str, str] = {
     'spt': _SUSPEND_TRADES,
     'spe': _SUSPEND_ENTRY,
     'uns': _UNSUSPEND,
-    'shc': _SHOW_CONFIG,
+    'sc': _SHOW_CONFIG,
     'pfs': _PERFORMANCE_SUMMARY
 }

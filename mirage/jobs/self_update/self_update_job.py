@@ -2,7 +2,7 @@ import logging
 import consts
 from mirage.config.config_manager import ConfigManager
 from mirage.jobs.mirage_job import MirageJob
-from mirage.utils.command_utils import run_command_async
+from mirage.utils.command_utils import CODE_SIGINT_BY_USER, run_command_async
 
 
 class SelfUpdateJob(MirageJob):
@@ -18,6 +18,9 @@ class SelfUpdateJob(MirageJob):
         self._reset_job()
 
     async def _get_status(self) -> tuple[int, int]:
-        result = await run_command_async('git rev-list --count --left-right HEAD...origin/' + consts.MIRAGE_MAIN_BRANCH)
-        status = result.split('\t')
+        code, stdout, _ = await run_command_async('git rev-list --count --left-right HEAD...origin/' + consts.MIRAGE_MAIN_BRANCH)
+        if code == CODE_SIGINT_BY_USER:
+            return 0, 0
+
+        status = stdout.split('\t')
         return int(status[0]), int(status[1])

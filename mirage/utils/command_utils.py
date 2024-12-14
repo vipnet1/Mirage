@@ -1,16 +1,16 @@
 import asyncio
-from asyncio import subprocess
 
 
-async def run_command_async(cmd: str) -> str:
+CODE_SUCCESS = 0
+# If ctrl+c was pressed during execution usually this code should be returned
+CODE_SIGINT_BY_USER = 130
+
+
+async def run_command_async(cmd: str) -> tuple[int, str, str]:
     proc = await asyncio.create_subprocess_shell(
         cmd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE
     )
     stdout, stderr = await proc.communicate()
-
-    if proc.returncode == 0:
-        return stdout.decode().strip()
-
-    raise subprocess.CalledProcessError(proc.returncode, cmd, stderr.decode().strip())
+    return proc.returncode, stdout.decode().strip(), stderr.decode().strip()

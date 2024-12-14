@@ -118,12 +118,12 @@ class StrategyManager:
 
         except StrategySilentException:
             logging.error('Strategy execution silent exception occurred')
-            self._strategy.exception_revert()
+            await self._strategy.exception_revert()
 
         except Exception as exc:
             logging.error('Exception occurred. Disabling strategy instance.')
             self._strategy.strategy_instance_config.set(self.CONFIG_KEY_IS_ACTIVE, False)
-            self._strategy.exception_revert()
+            await self._strategy.exception_revert()
             exception_cache = exc
 
         try:

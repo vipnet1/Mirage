@@ -68,13 +68,13 @@ class Strategy:
 
         try:
             status = await self._exception_revert_internal()
-            log_and_send(
+            await log_and_send(
                 logging.warning, ChannelsManager.get_communication_channel(),
                 'Exception revert successfull' if status else 'Exception revert failed'
             )
 
         except Exception:
-            log_and_send(
+            await log_and_send(
                 logging.error, ChannelsManager.get_communication_channel(),
                 f'Exception during exception revert:\n {traceback.format_exc()}'
             )

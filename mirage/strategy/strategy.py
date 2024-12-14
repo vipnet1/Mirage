@@ -40,7 +40,7 @@ class Strategy:
         self.capital_flow: VariableReference = None
 
     @abstractmethod
-    async def should_execute_strategy(self) -> tuple[bool, PreExecutionStatus, dict[str, any]]:
+    async def should_execute_strategy(self, available_capital: float) -> tuple[bool, PreExecutionStatus, dict[str, any]]:
         """
         Check if for some reason will ignore the request. Returning true means funds may be transferred to the
         hands of the strategy. Check invalid request format, whether already existing position exists etc.

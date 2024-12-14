@@ -1,6 +1,6 @@
 from enum import Enum
 
-PARAM_ALLOCATED_PERCENT = 'allocated_percent'
+PARAM_TRANSFER_AMOUNT = 'transfer_amount'
 
 
 class PreExecutionStatus(Enum):

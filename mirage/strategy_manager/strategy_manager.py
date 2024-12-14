@@ -6,12 +6,12 @@ from mirage.channels.channels_manager import ChannelsManager
 from mirage.config.config_manager import ConfigManager
 from mirage.config.suspend_state import SuspendState
 from mirage.performance.mirage_performance import InputTradePerformance, MiragePerformance
-from mirage.strategy.pre_execution_status import PARAM_ALLOCATED_PERCENT, PreExecutionStatus
+from mirage.strategy.pre_execution_status import PARAM_TRANSFER_AMOUNT, PreExecutionStatus
 from mirage.strategy.strategy import Strategy, StrategySilentException
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.strategy_manager.exceptions import NotEnoughFundsException, StrategyManagerException
 from mirage.tasks.task_manager import TaskManager
-from mirage.utils.multi_logging import log_and_send
+from mirage.utils.multi_logging import log_and_send, log_send_raise
 from mirage.utils.variable_reference import VariableReference
 from tools.key_generator import generate_key
 
@@ -29,6 +29,8 @@ class StrategyManager:
     CONFIG_KEY_STRATEGY_CAPITAL = 'strategy_manager.strategy_capital'
     # How many strategy currently holds and can work with.
     CONFIG_KEY_CAPITAL_FLOW = 'strategy_manager.capital_flow'
+    # How many additional money can give for trade. Risk management should not consider this for calculations.
+    CONFIG_KEY_CAPITAL_POOL = 'strategy_manager.capital_pool'
 
     CONFIG_KEY_IS_ACTIVE = 'strategy_manager.is_active'
 
@@ -54,17 +56,22 @@ class StrategyManager:
     async def _transfer_capital_from_strategy(self) -> None:
         raise NotImplementedError()
 
+    @abstractmethod
+    async def _fetch_balance(self) -> None:
+        raise NotImplementedError()
+
     async def process_strategy(self) -> None:
-        if self._is_suspent():
+        is_entry = self._strategy.is_entry()
+        if self._is_suspent(is_entry):
             return
 
         try:
             await TaskManager.wait_for_turn(StrategyManager.TASK_GROUP_TRADE_REQUESTS, generate_key(20))
-            await self._process_strategy_internal()
+            await self._process_strategy_internal(is_entry)
         finally:
             TaskManager.finish_turn(StrategyManager.TASK_GROUP_TRADE_REQUESTS)
 
-    async def _process_strategy_internal(self) -> None:
+    async def _process_strategy_internal(self, is_entry: bool) -> None:
         execution_status = StrategyExecutionStatus.RETURN_FUNDS
         exception_cache = None
 
@@ -74,13 +81,22 @@ class StrategyManager:
             if not self._should_trade_strategy():
                 return
 
-            should_trade, status, params = await self._strategy.should_execute_strategy()
+            available_capital = -1
+            if is_entry:
+                available_capital = await self._get_amount_can_transfer()
+
+            should_trade, status, params = await self._strategy.should_execute_strategy(available_capital)
             if not should_trade:
                 return
 
             transfer_amount = self._allocated_capital.variable
             if status == PreExecutionStatus.PARTIAL_ALLOCATION:
-                transfer_amount *= params[PARAM_ALLOCATED_PERCENT]
+                transfer_amount = params[PARAM_TRANSFER_AMOUNT]
+                if transfer_amount > available_capital:
+                    await log_send_raise(
+                        logging.error, ChannelsManager.get_communication_channel(), StrategyManagerException,
+                        f'Trying to transfer {transfer_amount} of base currency, when max available is {available_capital}'
+                    )
 
             await self._maybe_transfer_capital_to_strategy(transfer_amount)
 
@@ -123,6 +139,14 @@ class StrategyManager:
 
         logging.info('Strategy flow manager finished successfully')
 
+    async def _get_amount_can_transfer(self):
+        balance = await self._fetch_balance()
+        can_transfer = self._allocated_capital.variable + self._strategy.strategy_instance_config.get(self.CONFIG_KEY_CAPITAL_POOL)
+        if balance > can_transfer:
+            return can_transfer
+
+        return balance
+
     def _update_strategy_config(self) -> None:
         self._strategy.strategy_instance_config.set(self.CONFIG_KEY_ALLOCATED_CAPITAL, self._allocated_capital.variable)
         self._strategy.strategy_instance_config.set(self.CONFIG_KEY_STRATEGY_CAPITAL, self._strategy_capital.variable)
@@ -131,13 +155,12 @@ class StrategyManager:
             self._strategy.strategy_instance_config, self._strategy.strategy_name, self._strategy.strategy_instance
         )
 
-    def _is_suspent(self) -> bool:
+    def _is_suspent(self, is_entry: bool) -> bool:
         state = SuspendState(ConfigManager.execution_config.get(consts.EXECUTION_CONFIG_KEY_SUSPEND))
         if state == SuspendState.TRADES:
             logging.warning('Mirage suspent trades, ignoring request.')
             return True
 
-        is_entry = self._strategy.is_entry()
         if state == SuspendState.ENTRY and is_entry:
             logging.warning('Mirage suspent entry, ignoring request.')
             return True
@@ -145,7 +168,7 @@ class StrategyManager:
         return False
 
     async def _maybe_transfer_capital_to_strategy(self, transfer_amount: float) -> None:
-        if self._strategy_capital.variable != 0:
+        if self._strategy_capital.variable != 0 or transfer_amount <= 0:
             return
 
         if self._allocated_capital.variable <= 0:

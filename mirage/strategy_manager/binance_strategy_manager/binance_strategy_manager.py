@@ -1,5 +1,7 @@
 from ccxt.base.errors import InsufficientFunds
+from ccxt.base.types import Balances
 
+from mirage.algorithm.fetch_balance import fetch_balance_algorithm
 from mirage.algorithm.transfer.transfer_algorithm import Command, TransferAlgorithm
 from mirage.strategy_manager.exceptions import NotEnoughFundsException
 from mirage.strategy_manager.strategy_manager import StrategyManager, StrategyManagerException
@@ -62,3 +64,19 @@ class BinanceStrategyManager(StrategyManager):
                 )
             ]
         ).execute()
+
+    async def _fetch_balance(self) -> Balances:
+        fba = await fetch_balance_algorithm.FetchBalanceAlgorithm(
+            self._capital_flow,
+            self._strategy.request_data_id,
+            [
+                fetch_balance_algorithm.Command(
+                    strategy=self.__class__.__name__,
+                    description='Fetch funding wallet balance to check available amount for trade',
+                    wallet=BinanceStrategyManager.FUNDING_WALLET,
+                )
+            ]
+        ).execute()
+
+        results = fba.command_results[0]
+        return results[BinanceStrategyManager.CONFIG_KEY_BASE_CURRENCY]['totalWalletBalance']

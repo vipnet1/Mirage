@@ -98,8 +98,12 @@ class ConfigManager:
         return configs
 
     @staticmethod
-    def update_main_config(config_update: Config) -> None:
-        ConfigManager.config.raw_dict.update(config_update.raw_dict)
+    def update_main_config(config_update: Config, key_to_update: str) -> None:
+        dict_to_update = ConfigManager.config.raw_dict
+        if key_to_update:
+            dict_to_update = ConfigManager.config.get(key_to_update)
+
+        dict_to_update.update(config_update.raw_dict)
         _save_config(ConfigManager.config, get_config_environment() / consts.MAIN_CONFIG_FILENAME)
 
     @staticmethod
@@ -107,25 +111,50 @@ class ConfigManager:
         ConfigManager.execution_config.raw_dict.update(config_update.raw_dict)
 
     @staticmethod
-    def update_strategy_config(config_update: Config, strategy_name: str, strategy_instance: str) -> None:
+    def update_strategy_config(config_update: Config, strategy_name: str, strategy_instance: str, key_to_update: str) -> None:
         config: Config = ConfigManager.fetch_strategy_instance_config(strategy_name, strategy_instance)
-        config.raw_dict.update(config_update.raw_dict)
+
+        dict_to_update = config.raw_dict
+        if key_to_update:
+            dict_to_update = config.get(key_to_update)
+
+        dict_to_update.update(config_update.raw_dict)
         _save_config(config, _get_strategy_config_path(strategy_name, strategy_instance))
 
     @staticmethod
-    def override_main_config(config_override: Config) -> None:
-        ConfigManager.config = Config(config_override.raw_dict, ConfigManager.config.config_name)
+    def override_main_config(config_override: Config, key_to_override: str) -> None:
+        dict_to_override = ConfigManager.config.raw_dict
+        if key_to_override:
+            dict_to_override = ConfigManager.config.get(key_to_override)
+
+        dict_to_override.clear()
+        dict_to_override.update(config_override.raw_dict)
+
         _save_config(ConfigManager.config, get_config_environment() / consts.MAIN_CONFIG_FILENAME)
 
     @staticmethod
-    def override_strategy_config(config_override: Config, strategy_name: str, strategy_instance: str) -> None:
+    def override_strategy_config(config_override: Config, strategy_name: str, strategy_instance: str, key_to_override: str) -> None:
         strategy_config_path = None
         try:
             strategy_config_path = _get_strategy_config_path(strategy_name, strategy_instance)
 
         except ConfigLoadException:
+            if key_to_override:
+                # pylint: disable=raise-missing-from
+                raise ConfigLoadException(f'Config for {strategy_name} {strategy_instance} not exists. Cant override inner key.')
+
             logging.info('Creating new strategy config instance. Name: %s, Instance: %s.', strategy_name, strategy_instance)
             _create_strategy_config(strategy_name, strategy_instance)
             strategy_config_path = _get_strategy_config_path(strategy_name, strategy_instance)
+            _save_config(config_override, strategy_config_path)
+            return
 
-        _save_config(config_override, strategy_config_path)
+        config: Config = ConfigManager.fetch_strategy_instance_config(strategy_name, strategy_instance)
+        dict_to_override = config.raw_dict
+        if key_to_override:
+            dict_to_override = config.get(key_to_override)
+
+        dict_to_override.clear()
+        dict_to_override.update(config_override.raw_dict)
+
+        _save_config(config, strategy_config_path)

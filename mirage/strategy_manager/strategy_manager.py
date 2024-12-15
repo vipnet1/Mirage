@@ -12,6 +12,7 @@ from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.strategy_manager.exceptions import NotEnoughFundsException, StrategyManagerException
 from mirage.tasks.task_manager import TaskManager
 from mirage.utils.multi_logging import log_and_send, log_send_raise
+from mirage.utils.symbol_utils import floor_coin_amount
 from mirage.utils.variable_reference import VariableReference
 from tools.key_generator import generate_key
 
@@ -22,7 +23,6 @@ class StrategyManager:
     TASK_GROUP_TRADE_REQUESTS = 'trade_requests'
 
     description = ''
-
     # How many can be used by strategy in total
     CONFIG_KEY_ALLOCATED_CAPITAL = 'strategy_manager.allocated_capital'
     # How many transferred to the hands of the strategy. How many the strategy 'borrowed' from us and needs to return.
@@ -33,7 +33,7 @@ class StrategyManager:
     CONFIG_KEY_CAPITAL_POOL = 'strategy_manager.capital_pool'
     # If less than this amount available do not enter trade
     CONFIG_KEY_MIN_ENTRY_CAPITAL = 'strategy_manager.min_entry_capital'
-
+    CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
     CONFIG_KEY_IS_ACTIVE = 'strategy_manager.is_active'
 
     def __init__(self, strategy: Strategy):
@@ -191,6 +191,12 @@ class StrategyManager:
                 self._strategy.strategy_name, self._strategy.strategy_instance
             )
             return
+
+        # give strategies small room for errors in calculations
+        self._capital_flow.variable = floor_coin_amount(
+            self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_BASE_CURRENCY),
+            self._capital_flow.variable
+        )
 
         self._mirage_performance.record_trade_performance(InputTradePerformance(
             request_data_id=self._strategy.request_data_id,

@@ -16,8 +16,6 @@ class BinanceStrategyManager(StrategyManager):
     """
 
     FUNDING_WALLET = 'funding'
-
-    CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
     CONFIG_KEY_WALLET = 'strategy_manager.wallet'
 
     async def _transfer_capital_to_strategy(self, amount: float) -> None:
@@ -74,7 +72,7 @@ class BinanceStrategyManager(StrategyManager):
         await fba.execute()
 
         results = fba.command_results[0]
-        base_currency = self._strategy.strategy_instance_config.get(BinanceStrategyManager.CONFIG_KEY_BASE_CURRENCY)
+        base_currency = self._strategy.strategy_instance_config.get(self.CONFIG_KEY_BASE_CURRENCY)
 
         if base_currency not in results:
             return 0

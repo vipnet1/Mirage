@@ -18,7 +18,7 @@ from mirage.strategy.strategy import Strategy, StrategyException, StrategySilent
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.utils.dict_utils import dataclass_to_dict
 from mirage.utils.multi_logging import log_and_send
-from mirage.utils.symbol_utils import get_base_symbol
+from mirage.utils.symbol_utils import floor_coin_amount, get_base_symbol
 
 
 class CryptoPairTradingException(StrategyException):
@@ -44,9 +44,11 @@ class PositionInfo(BaseDbRecord):
 
     longed_coin: Optional[str] = None
     longed_amount: Optional[float] = None
+    longed_capital: Optional[float] = None
 
     shorted_coin: Optional[str] = None
     shorted_amount: Optional[float] = None
+    shorted_capital: Optional[float] = None
 
     transfer_amount: Optional[float] = None
     base_currency: Optional[str] = None
@@ -56,8 +58,6 @@ class CryptoPairTrading(Strategy):
     description = 'Go long & short on pairs. Binance margin account.'
 
     NOTIFY_BIG_RATIO_PERCENT = 30
-    # As someitimes get error that want to transfer more than available etc, reduce by a bit all calculated positions.
-    POSITION_REDUCTION = 0.99999
 
     CONFIG_KEY_MAX_LOSS_PERCENT = 'strategy.max_loss_percent'
     CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
@@ -92,8 +92,10 @@ class CryptoPairTrading(Strategy):
         self._pair_info = None
         self._longed_coin = None
         self._longed_amount = None
+        self._longed_capital = None
         self._shorted_coin = None
         self._shorted_amount = None
+        self._shorted_capital = None
         self._transfer_amount = None
 
     def is_entry(self) -> bool:
@@ -202,8 +204,10 @@ class CryptoPairTrading(Strategy):
                 is_open=True,
                 longed_coin=self._longed_coin,
                 longed_amount=self._longed_amount,
+                longed_capital=self._longed_capital,
                 shorted_coin=self._shorted_coin,
                 shorted_amount=self._shorted_amount,
+                shorted_capital=self._shorted_capital,
                 transfer_amount=self._transfer_amount,
                 base_currency=self.strategy_instance_config.get(CryptoPairTrading.CONFIG_KEY_BASE_CURRENCY)
             )
@@ -222,25 +226,31 @@ class CryptoPairTrading(Strategy):
         })
 
     async def _entry_buy_long_coins(self):
-        await simple_order_algorithm.SimpleOrderAlgorithm(
+        # As longed amount price may change and we won't have enough funds to buy it, we buy it with cost and then store the amount
+        soa = simple_order_algorithm.SimpleOrderAlgorithm(
             self.capital_flow,
             self.request_data_id,
             [
-                simple_order_algorithm.CommandAmount(
+                simple_order_algorithm.CommandCost(
                     strategy=self.__class__.__name__,
                     description='Pair trading long coin',
                     wallet=simple_order_algorithm.SimpleOrderAlgorithm.WALLET_MARGIN,
                     type=simple_order_algorithm.SimpleOrderAlgorithm.TYPE_MARKET,
                     symbol=self._longed_coin,
                     operation=simple_order_algorithm.SimpleOrderAlgorithm.OPERATION_BUY,
-                    amount=self._longed_amount,
+                    cost=self._longed_capital,
                     price=None
                 )
             ],
-        ).execute()
+        )
+        await soa.execute()
+
+        result = soa.command_results[0]
+        self._longed_amount = result['amount']
 
     async def _entry_sell_short_coins(self):
-        await simple_order_algorithm.SimpleOrderAlgorithm(
+        # As we borrowed exact coins amount we sell this exact amount
+        soa = simple_order_algorithm.SimpleOrderAlgorithm(
             self.capital_flow,
             self.request_data_id,
             [
@@ -255,7 +265,11 @@ class CryptoPairTrading(Strategy):
                     price=None
                 )
             ],
-        ).execute()
+        )
+        await soa.execute()
+
+        result = soa.command_results[0]
+        self._shorted_capital = result['cost']
 
     async def _exit_current_position(self, position_info: PositionInfo):
         await self._exit_sell_longed_coins()
@@ -270,6 +284,7 @@ class CryptoPairTrading(Strategy):
         )
 
     async def _exit_sell_longed_coins(self):
+        # we sell all the longed coins that we bought
         await simple_order_algorithm.SimpleOrderAlgorithm(
             self.capital_flow,
             self.request_data_id,
@@ -288,6 +303,7 @@ class CryptoPairTrading(Strategy):
         ).execute()
 
     async def _exit_buy_shorted_coins(self):
+        # we need to buy an exact amount of shorted coins to repay them
         await simple_order_algorithm.SimpleOrderAlgorithm(
             self.capital_flow,
             self.request_data_id,
@@ -395,9 +411,15 @@ class CryptoPairTrading(Strategy):
                 f'Still entering position, but consider changing chart ratio to remain market neutral.'
             )
 
-        self._longed_amount = long_amount * CryptoPairTrading.POSITION_REDUCTION
-        self._shorted_amount = short_amount * CryptoPairTrading.POSITION_REDUCTION
-        self._transfer_amount = long_capital * CryptoPairTrading.POSITION_REDUCTION
+        # floored so math operations won't accidently result larger number leading to an error
+        self._transfer_amount = floor_coin_amount(
+            self.strategy_instance_config.get(CryptoPairTrading.CONFIG_KEY_BASE_CURRENCY),
+            long_capital
+        )
+        reduction = self._transfer_amount / long_capital
+
+        self._longed_capital = self._transfer_amount * reduction
+        self._shorted_amount = short_amount * reduction
 
     async def _exception_revert_internal(self) -> bool:
         data_action = self.strategy_data.get(CryptoPairTrading.DATA_ACTION)

@@ -156,7 +156,7 @@ class StrategyManager:
         self._strategy.strategy_instance_config.set(self.CONFIG_KEY_STRATEGY_CAPITAL, self._strategy_capital.variable)
         self._strategy.strategy_instance_config.set(self.CONFIG_KEY_CAPITAL_FLOW, self._capital_flow.variable)
         ConfigManager.update_strategy_config(
-            self._strategy.strategy_instance_config, self._strategy.strategy_name, self._strategy.strategy_instance
+            self._strategy.strategy_instance_config, self._strategy.strategy_name, self._strategy.strategy_instance, ''
         )
 
     def _is_suspent(self, is_entry: bool) -> bool:
@@ -216,11 +216,8 @@ class StrategyManager:
         if self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_IS_ACTIVE):
             return True
 
-        if self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_STRATEGY_CAPITAL) > 0:
-            return True
-
         logging.warning(
-            'Ignoring strategy %s, %s. Deactivated and it does not hold capital.',
+            'Ignoring strategy %s, %s. It is deactivated.',
             self._strategy.strategy_name, self._strategy.strategy_instance
         )
         return False

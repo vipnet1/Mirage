@@ -4,6 +4,7 @@ from mirage.database.mongo.common_operations import get_records
 from mirage.performance.mirage_performance import DbTradePerformance
 from mirage.utils.date_utils import iso_string_to_datetime
 
+
 class SummaryReportGenerator:
     STRATEGY = 'Strategy'
     INSTANCE = 'Instance'
@@ -30,7 +31,7 @@ class SummaryReportGenerator:
                 iso_string_to_datetime(date_to) if date_to else None
             )
         )
-        print('yey')
+        return []
         # performance_summary = self._create_totals_summary(records)
         # return self._generate_results(performance_summary)
 

@@ -11,12 +11,13 @@ _SHOW_CONFIG = 'show-config'
 _PERFORMANCE_SUMMARY = 'performance-summary'
 _UPDATE_CONFIG = 'update-config'
 
-_TERMINATE = f'{_UPDATE_CONFIG}\n{UpdateConfigCommand.CONFIG_NAME_EXECUTION}\n{{"{consts.EXECUTION_CONFIG_KEY_TERMINATE}": true}}'
-_SUSPEND_TRADES = f'{_UPDATE_CONFIG}\n{UpdateConfigCommand.CONFIG_NAME_EXECUTION}\n \
+_TERMINATE = f'{_UPDATE_CONFIG}\n{UpdateConfigCommand.CONFIG_NAME_EXECUTION}\n{UpdateConfigCommand.ROOT_CONFIG_KEY_VALUE}\n \
+    {{"{consts.EXECUTION_CONFIG_KEY_TERMINATE}": true}}'
+_SUSPEND_TRADES = f'{_UPDATE_CONFIG}\n{UpdateConfigCommand.CONFIG_NAME_EXECUTION}\n{UpdateConfigCommand.ROOT_CONFIG_KEY_VALUE}\n \
     {{"{consts.EXECUTION_CONFIG_KEY_SUSPEND}": "{SuspendState.TRADES.value}"}}'
-_SUSPEND_ENTRY = f'{_UPDATE_CONFIG}\n{UpdateConfigCommand.CONFIG_NAME_EXECUTION}\n \
+_SUSPEND_ENTRY = f'{_UPDATE_CONFIG}\n{UpdateConfigCommand.CONFIG_NAME_EXECUTION}\n{UpdateConfigCommand.ROOT_CONFIG_KEY_VALUE}\n \
     {{"{consts.EXECUTION_CONFIG_KEY_SUSPEND}": "{SuspendState.ENTRY.value}"}}'
-_UNSUSPEND = f'{_UPDATE_CONFIG}\n{UpdateConfigCommand.CONFIG_NAME_EXECUTION}\n \
+_UNSUSPEND = f'{_UPDATE_CONFIG}\n{UpdateConfigCommand.CONFIG_NAME_EXECUTION}\n{UpdateConfigCommand.ROOT_CONFIG_KEY_VALUE}\n \
     {{"{consts.EXECUTION_CONFIG_KEY_SUSPEND}": "{SuspendState.NONE.value}"}}'
 
 enabled_commands: dict[str, TelegramCommand] = {

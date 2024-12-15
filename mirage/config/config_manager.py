@@ -107,8 +107,12 @@ class ConfigManager:
         _save_config(ConfigManager.config, get_config_environment() / consts.MAIN_CONFIG_FILENAME)
 
     @staticmethod
-    def update_execution_config(config_update: Config) -> None:
-        ConfigManager.execution_config.raw_dict.update(config_update.raw_dict)
+    def update_execution_config(config_update: Config, key_to_update: str) -> None:
+        dict_to_update = ConfigManager.execution_config.raw_dict
+        if key_to_update:
+            dict_to_update = ConfigManager.execution_config.get(key_to_update)
+
+        dict_to_update.update(config_update.raw_dict)
 
     @staticmethod
     def update_strategy_config(config_update: Config, strategy_name: str, strategy_instance: str, key_to_update: str) -> None:

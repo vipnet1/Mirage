@@ -31,7 +31,7 @@ class UpdateConfigCommand(TelegramCommand):
         if config_to_update == UpdateConfigCommand.CONFIG_NAME_MAIN:
             self._update_main_config(key_to_update)
         elif config_to_update == UpdateConfigCommand.CONFIG_NAME_EXECUTION:
-            self._update_execution_config()
+            self._update_execution_config(key_to_update)
         elif config_to_update == UpdateConfigCommand.CONFIG_NAME_STRATEGY:
             self._update_strategy_config(key_to_update)
         else:
@@ -47,9 +47,9 @@ class UpdateConfigCommand(TelegramCommand):
         config_update = Config(json.loads(self._clean_text), 'Update main config')
         ConfigManager.update_main_config(config_update, key_to_update)
 
-    def _update_execution_config(self) -> None:
+    def _update_execution_config(self, key_to_update: str) -> None:
         config_update = Config(json.loads(self._clean_text), 'Update execution config')
-        ConfigManager.update_execution_config(config_update)
+        ConfigManager.update_execution_config(config_update, key_to_update)
 
     def _update_strategy_config(self, key_to_update: str) -> None:
         strategy_name = self._get_top_line()

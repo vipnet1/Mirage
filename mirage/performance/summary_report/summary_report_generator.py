@@ -85,7 +85,10 @@ class SummaryReportGenerator:
 
                 winning_trades = data[InstanceInfoProcessor.WINNING_TRADES]
                 result[SummaryReportGenerator.BATTING_AVG] = str((winning_trades / records_count) * 100) + '%'
-                result[SummaryReportGenerator.WIN_LOSS_RATIO] = winning_trades / (records_count - winning_trades)
+
+                losing_trades = records_count - winning_trades
+                result[SummaryReportGenerator.WIN_LOSS_RATIO] = winning_trades / losing_trades if losing_trades > 0 else 0
+
                 result[SummaryReportGenerator.SHARPE_RATIO] = ''
                 result[SummaryReportGenerator.AVG_ROI] = str((data[InstanceInfoProcessor.ROI_PERCENT] / records_count) * 100) + '%'
                 result[SummaryReportGenerator.MAX_LOSS] = data[InstanceInfoProcessor.MAX_LOSS]

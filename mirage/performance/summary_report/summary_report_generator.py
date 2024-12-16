@@ -37,7 +37,7 @@ class SummaryReportGenerator:
     def _build_query(self, date_from: datetime.datetime, date_to: datetime.datetime) -> dict[str, any]:
         query = {}
         if date_from is not None:
-            query[consts.RECORD_KEY_CREATED_AT]['$gte'] = {consts.RECORD_KEY_CREATED_AT: {'$gte': date_from}}
+            query[consts.RECORD_KEY_CREATED_AT] = {consts.RECORD_KEY_CREATED_AT: {'$gte': date_from}}
 
         if date_to is not None:
             if consts.RECORD_KEY_CREATED_AT not in query:

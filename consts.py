@@ -1,7 +1,7 @@
 import logging
 
 ENVIRONMENTS = ['prod', 'dev']
-SELECTED_ENVIRONMENT = 'prod'
+SELECTED_ENVIRONMENT = 'dev'
 
 CHANNEL_TELEGRAM = 'telegram'
 CHANNEL_TRADING_VIEW = 'trading_view'

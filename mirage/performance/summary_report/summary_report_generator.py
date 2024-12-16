@@ -1,4 +1,6 @@
 import datetime
+
+import numpy as np
 import consts
 from mirage.database.mongo.common_operations import get_records
 from mirage.performance.mirage_performance import DbTradePerformance
@@ -15,24 +17,30 @@ class SummaryReportGenerator:
     PNL = 'PnL'
     AVG_PNL = 'Avg PnL'
     BATTING_AVG = 'Batting Avg'
+    AVG_WIN = 'Avg Win'
+    AVG_LOSS = 'Avg Loss'
+    AVG_WIN_PERCENT = 'Avg Win Percent'
+    AVG_LOSS_PERCENT = 'Avg Loss Percent'
     WIN_LOSS_RATIO = 'Win/Loss Ratio'
     SHARPE_RATIO = 'Sharpe Ratio'
+    STANDARD_DEVIATION = 'Standard Deviation'
     AVG_ROI = 'Avg ROI'
     MAX_LOSS = 'Max Loss'
     MAX_PROFIT = 'Max Profit'
     MAX_LOSS_PERCENT = 'Max Loss Percent'
     MAX_PROFIT_PERCENT = 'Max Profit Percent'
+    AVG_CAPITAL = 'Avg Capital'
 
     async def generate_report(self, date_from: str, date_to: str) -> list[dict[str, any]]:
+        iso_date_from = iso_string_to_datetime(date_from) if date_from else None
+        iso_date_to = iso_string_to_datetime(date_to) if date_to else None
+
         records = get_records(
             consts.DB_NAME_MIRAGE_PERFORMANCE, consts.COLLECTION_TRADE_OUTCOMES,
-            self._build_query(
-                iso_string_to_datetime(date_from) if date_from else None,
-                iso_string_to_datetime(date_to) if date_to else None
-            )
+            self._build_query(iso_date_from, iso_date_to)
         )
         performance_summary = self._create_totals_summary(records)
-        return self._generate_results(performance_summary, date_from, date_to)
+        return self._generate_results(performance_summary, iso_date_from, iso_date_to)
 
     def _build_query(self, date_from: datetime.datetime, date_to: datetime.datetime) -> dict[str, any]:
         query = {}
@@ -62,19 +70,19 @@ class SummaryReportGenerator:
 
         return performance_summary
 
-    def _generate_results(self, performance_summary: dict[str, any], date_from: str, date_to: str) -> list[dict[str, any]]:
+    def _generate_results(self, perfs: dict[str, any], date_from: datetime.datetime, date_to: datetime.datetime) -> list[dict[str, any]]:
         results = []
 
-        for strategy in performance_summary:
-            strategy_data = performance_summary[strategy]
+        for strategy in perfs:
+            strategy_data = perfs[strategy]
             for instance in strategy_data:
                 result = {}
                 data = strategy_data[instance]
 
                 result[SummaryReportGenerator.STRATEGY] = strategy
                 result[SummaryReportGenerator.INSTANCE] = instance
-                result[SummaryReportGenerator.DATE_FROM] = date_from if date_from else 'ALL'
-                result[SummaryReportGenerator.DATE_TO] = date_to if date_to else 'ALL'
+                result[SummaryReportGenerator.DATE_FROM] = date_from
+                result[SummaryReportGenerator.DATE_TO] = date_to
 
                 records_count = data[InstanceInfoProcessor.RECORDS_COUNT]
                 result[SummaryReportGenerator.RECORDS_COUNT] = records_count
@@ -86,15 +94,32 @@ class SummaryReportGenerator:
                 winning_trades = data[InstanceInfoProcessor.WINNING_TRADES]
                 result[SummaryReportGenerator.BATTING_AVG] = str((winning_trades / records_count) * 100) + '%'
 
-                losing_trades = records_count - winning_trades
-                result[SummaryReportGenerator.WIN_LOSS_RATIO] = winning_trades / losing_trades if losing_trades > 0 else 0
+                avg_win = data[InstanceInfoProcessor.TOTAL_WINS] / records_count
+                avg_loss = data[InstanceInfoProcessor.TOTAL_LOSSES] / records_count
+                result[SummaryReportGenerator.AVG_WIN] = avg_win
+                result[SummaryReportGenerator.AVG_LOSS] = avg_loss
+                result[SummaryReportGenerator.WIN_LOSS_RATIO] = (avg_win / abs(avg_loss)) if avg_loss > 0 else 0
 
-                result[SummaryReportGenerator.SHARPE_RATIO] = ''
+                losing_trades = records_count - winning_trades
+                result[SummaryReportGenerator.AVG_WIN_PERCENT] = str((data[InstanceInfoProcessor.TOTAL_WINS_PERCENT] / winning_trades) * 100) + \
+                    '%' if winning_trades > 0 else '0'
+                result[SummaryReportGenerator.AVG_LOSS_PERCENT] = str((data[InstanceInfoProcessor.TOTAL_LOSSES_PERCENT] / losing_trades) * 100) + \
+                    '%' if losing_trades > 0 else '0'
+
                 result[SummaryReportGenerator.AVG_ROI] = str((data[InstanceInfoProcessor.ROI_PERCENT] / records_count) * 100) + '%'
                 result[SummaryReportGenerator.MAX_LOSS] = data[InstanceInfoProcessor.MAX_LOSS]
                 result[SummaryReportGenerator.MAX_PROFIT] = data[InstanceInfoProcessor.MAX_PROFIT]
                 result[SummaryReportGenerator.MAX_LOSS_PERCENT] = str(data[InstanceInfoProcessor.MAX_LOSS_PERCENT] * 100) + '%'
                 result[SummaryReportGenerator.MAX_PROFIT_PERCENT] = str(data[InstanceInfoProcessor.MAX_PROFIT_PERCENT] * 100) + '%'
+
+                result[SummaryReportGenerator.AVG_CAPITAL] = data[InstanceInfoProcessor.TOTAL_CAPITAL] / records_count
+
+                mean_return = np.mean(data[InstanceInfoProcessor.PROFIT_PERCENTS])
+                std_dev_return = np.std(data[InstanceInfoProcessor.PROFIT_PERCENTS])
+                sharpe_ratio = (mean_return / std_dev_return * np.sqrt(records_count)) if std_dev_return > 0 else 0
+
+                result[SummaryReportGenerator.STANDARD_DEVIATION] = str(std_dev_return * 100) + '%'
+                result[SummaryReportGenerator.SHARPE_RATIO] = sharpe_ratio
 
                 results.append(result)
 

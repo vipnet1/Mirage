@@ -58,9 +58,15 @@ class PerformaceSummaryCommand(TelegramCommand):
             SummaryReportGenerator.BATTING_AVG,
             SummaryReportGenerator.WIN_LOSS_RATIO,
             SummaryReportGenerator.SHARPE_RATIO,
+            SummaryReportGenerator.STANDARD_DEVIATION,
             SummaryReportGenerator.AVG_ROI,
+            SummaryReportGenerator.AVG_CAPITAL,
+            SummaryReportGenerator.AVG_WIN,
+            SummaryReportGenerator.AVG_WIN_PERCENT,
+            SummaryReportGenerator.AVG_LOSS,
+            SummaryReportGenerator.AVG_LOSS_PERCENT,
             SummaryReportGenerator.MAX_LOSS,
             SummaryReportGenerator.MAX_PROFIT,
             SummaryReportGenerator.MAX_LOSS_PERCENT,
-            SummaryReportGenerator.MAX_PROFIT_PERCENT,
+            SummaryReportGenerator.MAX_PROFIT_PERCENT
         ]

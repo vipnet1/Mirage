@@ -4,7 +4,7 @@ import tempfile
 from mirage.channels.channels_manager import ChannelsManager
 from mirage.channels.telegram.exceptions import MirageTelegramException
 from mirage.channels.telegram.telegram_command import TelegramCommand
-from mirage.performance.summary_report_generator import SummaryReportGenerator
+from mirage.performance.summary_report.summary_report_generator import SummaryReportGenerator
 
 
 class PerformaceSummaryCommand(TelegramCommand):

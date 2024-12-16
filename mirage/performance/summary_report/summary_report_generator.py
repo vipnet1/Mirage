@@ -2,7 +2,7 @@ import datetime
 
 import numpy as np
 import consts
-from mirage.database.mongo.common_operations import get_records
+from mirage.database.mongo.common_operations import build_dates_query, get_records
 from mirage.performance.mirage_performance import DbTradePerformance
 from mirage.performance.summary_report.instance_info_processor import InstanceInfoProcessor
 from mirage.utils.date_utils import iso_string_to_datetime
@@ -37,23 +37,10 @@ class SummaryReportGenerator:
 
         records = get_records(
             consts.DB_NAME_MIRAGE_PERFORMANCE, consts.COLLECTION_TRADES_PERFORMANCE,
-            self._build_query(iso_date_from, iso_date_to)
+            build_dates_query(iso_date_from, iso_date_to)
         )
         performance_summary = self._create_totals_summary(records)
         return self._generate_results(performance_summary, iso_date_from, iso_date_to)
-
-    def _build_query(self, date_from: datetime.datetime, date_to: datetime.datetime) -> dict[str, any]:
-        query = {}
-        if date_from is not None:
-            query[consts.RECORD_KEY_CREATED_AT] = {'$gte': date_from}
-
-        if date_to is not None:
-            if consts.RECORD_KEY_CREATED_AT not in query:
-                query[consts.RECORD_KEY_CREATED_AT] = {}
-
-            query[consts.RECORD_KEY_CREATED_AT]['$lte'] = date_to
-
-        return query
 
     def _create_totals_summary(self, records) -> dict[str, any]:
         performance_summary = {}

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
+import datetime
 from pymongo.results import InsertOneResult, UpdateResult
 from pymongo.cursor import Cursor
 import consts
@@ -18,7 +18,7 @@ def insert_dict(db_name: str, collection_name: str, record: dict[str, any]) -> I
 def _insert_record(db_name: str, collection_name: str, clean_record: dict[str, any]) -> InsertOneResult:
     collection = DbConfig.client[db_name][collection_name]
 
-    clean_record[consts.RECORD_KEY_CREATED_AT] = datetime.now(timezone.utc)
+    clean_record[consts.RECORD_KEY_CREATED_AT] = datetime.datetime.now(datetime.timezone.utc)
     clean_record[consts.RECORD_KEY_UPDATED_AT] = clean_record[consts.RECORD_KEY_CREATED_AT]
     return collection.insert_one(clean_record)
 
@@ -36,7 +36,7 @@ def _update_record(db_name: str, collection_name: str, clean_query: dict[str, an
 
     return collection.update_one(clean_query, {
         '$set': {
-            consts.RECORD_KEY_UPDATED_AT: datetime.now(timezone.utc),
+            consts.RECORD_KEY_UPDATED_AT: datetime.datetime.now(datetime.timezone.utc),
             **clean_update
         }
     })
@@ -50,3 +50,17 @@ def get_single_record(db_name: str, collection_name: str, query: dict[str, any],
 def get_records(db_name: str, collection_name: str, query: dict[str, any], sort: list[tuple] = None) -> Cursor:
     collection = DbConfig.client[db_name][collection_name]
     return collection.find(query, sort=sort)
+
+
+def build_dates_query(date_from: datetime.datetime, date_to: datetime.datetime) -> dict[str, any]:
+    query = {}
+    if date_from is not None:
+        query[consts.RECORD_KEY_CREATED_AT] = {'$gte': date_from}
+
+    if date_to is not None:
+        if consts.RECORD_KEY_CREATED_AT not in query:
+            query[consts.RECORD_KEY_CREATED_AT] = {}
+
+        query[consts.RECORD_KEY_CREATED_AT]['$lte'] = date_to
+
+    return query

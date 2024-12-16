@@ -6,10 +6,12 @@ import consts
 from mirage.channels.channels_manager import ChannelsManager
 from mirage.channels.telegram.exceptions import MirageTelegramException
 from mirage.channels.telegram.telegram_command import TelegramCommand
-from mirage.database.mongo.common_operations import get_records
+from mirage.database.mongo.common_operations import build_dates_query, get_records
+from mirage.utils.date_utils import iso_string_to_datetime
 
 
 class ExportDbCommand(TelegramCommand):
+    DATE_ALL = 'ALL'
     ALLOWED_EXPORTS = {
         consts.DB_NAME_HISTORY: {consts.COLLECTION_REQUEST_DATA, consts.COLLECTION_BROKER_RESPONSE},
         consts.DB_NAME_MIRAGE_PERFORMANCE: {consts.COLLECTION_TRADES_PERFORMANCE},
@@ -36,7 +38,26 @@ class ExportDbCommand(TelegramCommand):
 
         self._remove_first_line()
 
-        records = list(get_records(db_name, collection_name, {}, sort=[(consts.RECORD_KEY_CREATED_AT, pymongo.DESCENDING)]))
+        date_from = self._get_top_line()
+        if not date_from:
+            raise MirageTelegramException(f'Provide date from. For example 2024-02-15. For all time write {ExportDbCommand.DATE_ALL}.')
+
+        self._remove_first_line()
+
+        date_to = self._get_top_line()
+        if not date_to:
+            raise MirageTelegramException(f'Provide date to. For example 2024-02-15. For all time write {ExportDbCommand.DATE_ALL}.')
+
+        self._remove_first_line()
+
+        records = list(get_records(
+            db_name, collection_name,
+            build_dates_query(
+                None if date_from == ExportDbCommand.DATE_ALL else iso_string_to_datetime(date_from),
+                None if date_to == ExportDbCommand.DATE_ALL else iso_string_to_datetime(date_to)
+            ),
+            sort=[(consts.RECORD_KEY_CREATED_AT, pymongo.DESCENDING)]
+        ))
         df = pd.DataFrame(records)
 
         with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as temp_file:

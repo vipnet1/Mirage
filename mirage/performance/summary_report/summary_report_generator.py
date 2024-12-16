@@ -98,13 +98,13 @@ class SummaryReportGenerator:
                 avg_loss = data[InstanceInfoProcessor.TOTAL_LOSSES] / records_count
                 result[SummaryReportGenerator.AVG_WIN] = avg_win
                 result[SummaryReportGenerator.AVG_LOSS] = avg_loss
-                result[SummaryReportGenerator.WIN_LOSS_RATIO] = (avg_win / abs(avg_loss)) if avg_loss > 0 else 0
+                result[SummaryReportGenerator.WIN_LOSS_RATIO] = (avg_win / abs(avg_loss)) if abs(avg_loss) > 0 else '-'
 
                 losing_trades = records_count - winning_trades
                 result[SummaryReportGenerator.AVG_WIN_PERCENT] = str((data[InstanceInfoProcessor.TOTAL_WINS_PERCENT] / winning_trades) * 100) + \
-                    '%' if winning_trades > 0 else '0'
+                    '%' if winning_trades > 0 else '-'
                 result[SummaryReportGenerator.AVG_LOSS_PERCENT] = str((data[InstanceInfoProcessor.TOTAL_LOSSES_PERCENT] / losing_trades) * 100) + \
-                    '%' if losing_trades > 0 else '0'
+                    '%' if losing_trades > 0 else '-'
 
                 result[SummaryReportGenerator.AVG_ROI] = str((data[InstanceInfoProcessor.ROI_PERCENT] / records_count) * 100) + '%'
                 result[SummaryReportGenerator.MAX_LOSS] = data[InstanceInfoProcessor.MAX_LOSS]
@@ -116,7 +116,7 @@ class SummaryReportGenerator:
 
                 mean_return = np.mean(data[InstanceInfoProcessor.PROFIT_PERCENTS])
                 std_dev_return = np.std(data[InstanceInfoProcessor.PROFIT_PERCENTS])
-                sharpe_ratio = (mean_return / std_dev_return * np.sqrt(records_count)) if std_dev_return > 0 else 0
+                sharpe_ratio = (mean_return / std_dev_return * np.sqrt(365)) if std_dev_return > 0 else '-'
 
                 result[SummaryReportGenerator.STANDARD_DEVIATION] = str(std_dev_return * 100) + '%'
                 result[SummaryReportGenerator.SHARPE_RATIO] = sharpe_ratio

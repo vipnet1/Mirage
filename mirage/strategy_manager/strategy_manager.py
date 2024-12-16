@@ -85,8 +85,16 @@ class StrategyManager:
 
             available_capital = -1
             if is_entry:
-                available_capital = await self._get_amount_can_transfer()
                 min_entry_capital = self._strategy.strategy_instance_config.get(self.CONFIG_KEY_MIN_ENTRY_CAPITAL)
+                if self._allocated_capital.variable < min_entry_capital:
+                    await log_and_send(
+                        logging.warning, ChannelsManager.get_communication_channel(),
+                        f'Not enough allocated funds to strategy {self._strategy.strategy_name}, instance {self._strategy.strategy_instance}'
+                        + f'. Minimal amount {min_entry_capital}. Consider allocating more.'
+                    )
+                    return
+
+                available_capital = await self._get_amount_can_transfer()
                 if available_capital < min_entry_capital:
                     await log_and_send(
                         logging.warning, ChannelsManager.get_communication_channel(),

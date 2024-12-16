@@ -10,8 +10,7 @@ from mirage.algorithm.fetch_tickers import fetch_tickers_algorithm
 from mirage.algorithm.simple_order import simple_order_algorithm
 from mirage.channels.channels_manager import ChannelsManager
 from mirage.database.mongo.base_db_record import BaseDbRecord
-from mirage.database.mongo.common_operations import insert_dataclass, update_dataclass
-from mirage.database.mongo.db_config import DbConfig
+from mirage.database.mongo.common_operations import get_single_record, insert_dataclass, update_dataclass
 from mirage.strategy.crypto_pair_trading.pair_info_parser import PairInfoParser
 from mirage.strategy.pre_execution_status import PARAM_TRANSFER_AMOUNT, PreExecutionStatus
 from mirage.strategy.strategy import Strategy, StrategyException, StrategySilentException
@@ -336,7 +335,8 @@ class CryptoPairTrading(Strategy):
         ).execute()
 
     def _get_recent_position_info_from_db(self):
-        return DbConfig.client[consts.DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING][consts.COLLECTION_POSITION_INFO].find_one(
+        return get_single_record(
+            consts.DB_NAME_STRATEGY_CRYPTO_PAIR_TRADING, consts.COLLECTION_POSITION_INFO,
             dataclass_to_dict(PositionInfo(strategy_instance=self.strategy_instance)),
             sort=[(consts.RECORD_KEY_CREATED_AT, pymongo.DESCENDING)]
         )

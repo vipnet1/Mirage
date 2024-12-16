@@ -42,11 +42,11 @@ def _update_record(db_name: str, collection_name: str, clean_query: dict[str, an
     })
 
 
-def get_single_record(db_name: str, collection_name: str, query: dict[str, any]) -> dict[str, any]:
+def get_single_record(db_name: str, collection_name: str, query: dict[str, any], sort: list[tuple] = None) -> dict[str, any]:
     collection = DbConfig.client[db_name][collection_name]
-    return collection.find_one(query)
+    return collection.find_one(query, sort=sort)
 
 
-def get_records(db_name: str, collection_name: str, query: dict[str, any]) -> Cursor:
+def get_records(db_name: str, collection_name: str, query: dict[str, any], sort: list[tuple] = None) -> Cursor:
     collection = DbConfig.client[db_name][collection_name]
-    return collection.find(query)
+    return collection.find(query, sort=sort)

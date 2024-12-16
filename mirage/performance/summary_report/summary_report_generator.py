@@ -36,7 +36,7 @@ class SummaryReportGenerator:
         iso_date_to = iso_string_to_datetime(date_to) if date_to else None
 
         records = get_records(
-            consts.DB_NAME_MIRAGE_PERFORMANCE, consts.COLLECTION_TRADE_OUTCOMES,
+            consts.DB_NAME_MIRAGE_PERFORMANCE, consts.COLLECTION_TRADES_PERFORMANCE,
             self._build_query(iso_date_from, iso_date_to)
         )
         performance_summary = self._create_totals_summary(records)

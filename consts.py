@@ -26,7 +26,7 @@ DB_NAME_MIRAGE_SECURITY = 'mirage_security'
 COLLECTION_REQUEST_NONCES = 'request_nonces'
 
 DB_NAME_MIRAGE_PERFORMANCE = 'mirage_performance'
-COLLECTION_TRADE_OUTCOMES = 'trades_performance'
+COLLECTION_TRADES_PERFORMANCE = 'trades_performance'
 
 RECORD_KEY_CREATED_AT = 'created_at'
 RECORD_KEY_UPDATED_AT = 'updated_at'

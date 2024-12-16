@@ -1,4 +1,5 @@
 import consts
+from mirage.channels.telegram.commands.export_db import ExportDbCommand
 from mirage.channels.telegram.commands.performance.show_summary import PerformaceSummaryCommand
 from mirage.channels.telegram.telegram_command import TelegramCommand
 from mirage.channels.telegram.commands.backup import BackupCommand
@@ -26,6 +27,7 @@ enabled_commands: dict[str, TelegramCommand] = {
     _SHOW_CONFIG: ShowConfigCommand,
     _UPDATE_CONFIG: UpdateConfigCommand,
     _PERFORMANCE_SUMMARY: PerformaceSummaryCommand,
+    'export-db': ExportDbCommand
 }
 
 enabled_aliases: dict[str, str] = {

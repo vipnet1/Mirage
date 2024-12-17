@@ -19,6 +19,17 @@ class UpdateConfigCommand(TelegramCommand):
 
         self._remove_first_line()
 
+        if config_to_update not in [
+            UpdateConfigCommand.CONFIG_NAME_MAIN,
+            UpdateConfigCommand.CONFIG_NAME_EXECUTION,
+            UpdateConfigCommand.CONFIG_NAME_STRATEGY
+        ]:
+            raise MirageTelegramException(
+                f'''Invalid config name. Available: {str([
+                    UpdateConfigCommand.CONFIG_NAME_MAIN, UpdateConfigCommand.CONFIG_NAME_EXECUTION, UpdateConfigCommand.CONFIG_NAME_STRATEGY
+                ])}'''
+            )
+
         key_to_update = self._get_top_line()
         if not key_to_update:
             raise MirageTelegramException(f'Provide key to update, or {UpdateConfigCommand.ROOT_CONFIG_KEY_VALUE} for config root')
@@ -32,14 +43,8 @@ class UpdateConfigCommand(TelegramCommand):
             self._update_main_config(key_to_update)
         elif config_to_update == UpdateConfigCommand.CONFIG_NAME_EXECUTION:
             self._update_execution_config(key_to_update)
-        elif config_to_update == UpdateConfigCommand.CONFIG_NAME_STRATEGY:
-            self._update_strategy_config(key_to_update)
         else:
-            raise MirageTelegramException(
-                f'''Invalid config name. Available: {str([
-                    UpdateConfigCommand.CONFIG_NAME_MAIN, UpdateConfigCommand.CONFIG_NAME_EXECUTION, UpdateConfigCommand.CONFIG_NAME_STRATEGY
-                ])}'''
-            )
+            self._update_strategy_config(key_to_update)
 
         await self._context.bot.send_message(self._update.effective_chat.id, 'Done!')
 

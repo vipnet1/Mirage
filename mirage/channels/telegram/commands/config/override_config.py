@@ -18,6 +18,16 @@ class OverrideConfigCommand(TelegramCommand):
 
         self._remove_first_line()
 
+        if config_to_override not in [
+            OverrideConfigCommand.CONFIG_NAME_MAIN,
+            OverrideConfigCommand.CONFIG_NAME_STRATEGY
+        ]:
+            raise MirageTelegramException(
+                f'''Invalid config name. Available: {str([
+                    OverrideConfigCommand.CONFIG_NAME_MAIN, OverrideConfigCommand.CONFIG_NAME_STRATEGY
+                ])}'''
+            )
+
         key_to_override = self._get_top_line()
         if not key_to_override:
             raise MirageTelegramException(f'Provide key to override, or {OverrideConfigCommand.ROOT_CONFIG_KEY_VALUE} for config root')
@@ -29,14 +39,8 @@ class OverrideConfigCommand(TelegramCommand):
 
         if config_to_override == OverrideConfigCommand.CONFIG_NAME_MAIN:
             self._override_main_config(key_to_override)
-        elif config_to_override == OverrideConfigCommand.CONFIG_NAME_STRATEGY:
-            self._override_strategy_config(key_to_override)
         else:
-            raise MirageTelegramException(
-                f'''Invalid config name. Available: {str([
-                    OverrideConfigCommand.CONFIG_NAME_MAIN, OverrideConfigCommand.CONFIG_NAME_STRATEGY
-                ])}'''
-            )
+            self._override_strategy_config(key_to_override)
 
         await self._context.bot.send_message(self._update.effective_chat.id, 'Done!')
 

@@ -35,7 +35,7 @@ async def _handle_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     except InvalidTelegramCommandException:
         await ChannelsManager.get_communication_channel().send_message(
-            f'Available commands:\n {list(enabled_commands.keys()) + list(enabled_aliases.keys())}'
+            f'Available commands:\n{list(enabled_commands.keys())}\n\nAliases:\n{list(enabled_aliases.keys())}'
         )
 
     except Exception as exc:
@@ -51,19 +51,23 @@ def _verify_command_timeout(update: Update) -> None:
         raise TelegramCommandTimeoutException(f'More than {consts.IGNORE_TELEGRAM_COMMANDS_AFTER_SECONDS} seconds passed. Ignoring command.')
 
 
-def _get_command_class(update: Update, alias: str = None) -> tuple[type[TelegramCommand], str]:
-    text = alias if alias is not None else update.message.text
-    command = text.splitlines()[0]
+def _get_command_class(update: Update) -> tuple[type[TelegramCommand], str]:
+    splitted_lines = update.message.text.splitlines()
 
-    if command in enabled_commands:
-        return enabled_commands[command], text
+    results = []
+    for line in splitted_lines:
+        if line in enabled_aliases:
+            results.extend(enabled_aliases[line].splitlines())
+        else:
+            results.append(line)
 
-    if command not in enabled_aliases:
+    built_text = '\n'.join(results)
+
+    command = results[0]
+    if command not in enabled_commands:
         raise InvalidTelegramCommandException(f'Invalid telegram command: {command}')
 
-    alias = enabled_aliases[command]
-    command_class, _ = _get_command_class(update, alias)
-    return command_class, alias
+    return enabled_commands[command], built_text
 
 
 class TelegramChannel(CommunicationChannel):

@@ -57,7 +57,7 @@ class SimpleOrderAlgorithm(MirageAlgorithm):
         else:
             raise SimpleOrderAlgorithmException(f'Unknown {self.__class__.__name__} command')
 
-        self._capital_flow.variable += order['cost'] if command.operation == self.OPERATION_SELL else -order['cost']
+        self._capital_flow.variable += order['cost'] if command.operation == SimpleOrderAlgorithm.OPERATION_SELL else -order['cost']
         self.command_results.append(order)
 
     def _validate_command(self, command: CommandBase) -> None:
@@ -79,7 +79,10 @@ class SimpleOrderAlgorithm(MirageAlgorithm):
     async def _process_command_amount(self, command: CommandAmount) -> None:
         binance = Binance()
         async with binance.exchange:
-            logging.info('Placing %s order on binance. Symbol %s, amount: %s', command.wallet, command.symbol, command.amount)
+            logging.info(
+                'Placing %s order on binance. Symbol: %s, Side: %s, Amount: %s',
+                command.wallet, command.symbol, command.operation, command.amount
+            )
             return await binance.exchange.create_order(
                 symbol=command.symbol,
                 type=command.type,
@@ -94,7 +97,10 @@ class SimpleOrderAlgorithm(MirageAlgorithm):
     async def _process_command_cost(self, command: CommandCost) -> None:
         binance = Binance()
         async with binance.exchange:
-            logging.info('Placing %s order on binance. Symbol %s, cost: %s', command.wallet, command.symbol, command.cost)
+            logging.info(
+                'Placing %s order on binance. Symbol: %s, Side: %s, Cost: %s',
+                command.wallet, command.symbol, command.operation, command.cost
+            )
             return await binance.exchange.create_order(
                 symbol=command.symbol,
                 type=command.type,

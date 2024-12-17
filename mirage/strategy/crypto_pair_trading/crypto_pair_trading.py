@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import logging
 from typing import Optional
 
@@ -9,48 +8,16 @@ from mirage.algorithm.borrow.exceptions import NoLendersException
 from mirage.algorithm.fetch_tickers import fetch_tickers_algorithm
 from mirage.algorithm.simple_order import simple_order_algorithm
 from mirage.channels.channels_manager import ChannelsManager
-from mirage.database.mongo.base_db_record import BaseDbRecord
 from mirage.database.mongo.common_operations import get_single_record, insert_dataclass, update_dataclass
+from mirage.strategy.crypto_pair_trading.exceptions import CryptoPairTradingException, SilentCryptoPairTradingException
 from mirage.strategy.crypto_pair_trading.pair_info_parser import PairInfoParser
+from mirage.strategy.crypto_pair_trading.position_info import PositionInfo
 from mirage.strategy.pre_execution_status import PARAM_TRANSFER_AMOUNT, PreExecutionStatus
-from mirage.strategy.strategy import Strategy, StrategyException, StrategySilentException
+from mirage.strategy.strategy import Strategy
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.utils.dict_utils import dataclass_to_dict
 from mirage.utils.multi_logging import log_and_send
 from mirage.utils.symbol_utils import floor_coin_amount, get_base_symbol
-
-
-class CryptoPairTradingException(StrategyException):
-    pass
-
-
-class SilentCryptoPairTradingException(StrategySilentException):
-    pass
-
-
-@dataclass
-class PositionInfo(BaseDbRecord):
-    request_data_id: Optional[str] = None
-    strategy_instance: Optional[str] = None
-    indicator: Optional[str] = None
-
-    chart_pair: Optional[str] = None
-
-    side: Optional[str] = None
-    pair: Optional[str] = None
-
-    is_open: Optional[bool] = None
-
-    longed_coin: Optional[str] = None
-    longed_amount: Optional[float] = None
-    longed_capital: Optional[float] = None
-
-    shorted_coin: Optional[str] = None
-    shorted_amount: Optional[float] = None
-    shorted_capital: Optional[float] = None
-
-    transfer_amount: Optional[float] = None
-    base_currency: Optional[str] = None
 
 
 class CryptoPairTrading(Strategy):
@@ -118,7 +85,7 @@ class CryptoPairTrading(Strategy):
                 return False, None, None
 
             side = self.strategy_data.get(CryptoPairTrading.DATA_SIDE)
-            if side not in [self.SIDE_LONG, self.SIDE_SHORT]:
+            if side not in [CryptoPairTrading.SIDE_LONG, CryptoPairTrading.SIDE_SHORT]:
                 raise CryptoPairTradingException(f'Invalid side received {side} with chart pair {pair_raw}')
 
             await self._fetch_coins_amounts(side, available_capital)
@@ -342,7 +309,7 @@ class CryptoPairTrading(Strategy):
         )
 
     async def _fetch_coins_amounts(self, side: str, available_capital: float) -> None:
-        if side == self.SIDE_LONG:
+        if side == CryptoPairTrading.SIDE_LONG:
             self._longed_coin = self._pair_info.first_pair
             self._shorted_coin = self._pair_info.second_pair
         else:

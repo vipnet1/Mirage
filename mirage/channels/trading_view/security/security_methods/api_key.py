@@ -12,13 +12,13 @@ class ApiKey(SecurityMethod):
     async def _perform_validation_internal(self) -> dict[str, any]:
         try:
             request_data = await self._request.json()
-            request_api_key = request_data[self.REQUEST_API_KEY]
-            config_api_key = self._method_config.get(self.CONFIG_API_KEY)
+            request_api_key = request_data[ApiKey.REQUEST_API_KEY]
+            config_api_key = self._method_config.get(ApiKey.CONFIG_API_KEY)
 
             if request_api_key != config_api_key:
                 raise ApiKeyException('Invalid api key')
 
-            del request_data[self.REQUEST_API_KEY]
+            del request_data[ApiKey.REQUEST_API_KEY]
             return request_data
 
         except Exception as exc:

@@ -41,13 +41,13 @@ class StrategyManager:
         self._mirage_performance = MiragePerformance()
 
         self._allocated_capital = VariableReference(
-            self._strategy.strategy_instance_config.get(self.CONFIG_KEY_ALLOCATED_CAPITAL)
+            self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_ALLOCATED_CAPITAL)
         )
         self._strategy_capital = VariableReference(
-            self._strategy.strategy_instance_config.get(self.CONFIG_KEY_STRATEGY_CAPITAL)
+            self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_STRATEGY_CAPITAL)
         )
         self._capital_flow = VariableReference(
-            self._strategy.strategy_instance_config.get(self.CONFIG_KEY_CAPITAL_FLOW)
+            self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_CAPITAL_FLOW)
         )
 
     @abstractmethod
@@ -85,7 +85,7 @@ class StrategyManager:
 
             available_capital = -1
             if is_entry:
-                min_entry_capital = self._strategy.strategy_instance_config.get(self.CONFIG_KEY_MIN_ENTRY_CAPITAL)
+                min_entry_capital = self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_MIN_ENTRY_CAPITAL)
                 if self._allocated_capital.variable < min_entry_capital:
                     await log_and_send(
                         logging.warning, ChannelsManager.get_communication_channel(),
@@ -98,7 +98,7 @@ class StrategyManager:
                 if available_capital < min_entry_capital:
                     await log_and_send(
                         logging.warning, ChannelsManager.get_communication_channel(),
-                        f'Not enough funds to transfter money to strategy {self._strategy.strategy_name}, instance {self._strategy.strategy_instance}'
+                        f'Not enough funds to transfer money to strategy {self._strategy.strategy_name}, instance {self._strategy.strategy_instance}'
                         + f'. Minimal amount {min_entry_capital}. Consider increasing capital.'
                     )
                     return
@@ -130,7 +130,7 @@ class StrategyManager:
 
         except Exception as exc:
             logging.error('Exception occurred. Disabling strategy instance.')
-            self._strategy.strategy_instance_config.set(self.CONFIG_KEY_IS_ACTIVE, False)
+            self._strategy.strategy_instance_config.set(StrategyManager.CONFIG_KEY_IS_ACTIVE, False)
             await self._strategy.exception_revert()
             exception_cache = exc
 
@@ -153,16 +153,16 @@ class StrategyManager:
 
     async def _get_amount_can_transfer(self):
         balance = await self._fetch_balance()
-        can_transfer = self._allocated_capital.variable + self._strategy.strategy_instance_config.get(self.CONFIG_KEY_CAPITAL_POOL)
+        can_transfer = self._allocated_capital.variable + self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_CAPITAL_POOL)
         if balance > can_transfer:
             return can_transfer
 
         return balance
 
     def _update_strategy_config(self) -> None:
-        self._strategy.strategy_instance_config.set(self.CONFIG_KEY_ALLOCATED_CAPITAL, self._allocated_capital.variable)
-        self._strategy.strategy_instance_config.set(self.CONFIG_KEY_STRATEGY_CAPITAL, self._strategy_capital.variable)
-        self._strategy.strategy_instance_config.set(self.CONFIG_KEY_CAPITAL_FLOW, self._capital_flow.variable)
+        self._strategy.strategy_instance_config.set(StrategyManager.CONFIG_KEY_ALLOCATED_CAPITAL, self._allocated_capital.variable)
+        self._strategy.strategy_instance_config.set(StrategyManager.CONFIG_KEY_STRATEGY_CAPITAL, self._strategy_capital.variable)
+        self._strategy.strategy_instance_config.set(StrategyManager.CONFIG_KEY_CAPITAL_FLOW, self._capital_flow.variable)
         ConfigManager.update_strategy_config(
             self._strategy.strategy_instance_config, self._strategy.strategy_name, self._strategy.strategy_instance, ''
         )

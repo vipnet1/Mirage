@@ -46,6 +46,7 @@ class PerformaceSummaryCommand(TelegramCommand):
         await ChannelsManager.get_communication_channel().send_file(filepath, 'performance_summary.csv')
         os.remove(filepath)
 
+    # The order here is the one will be in the file
     def _get_columns(self) -> list[str]:
         return [
             SummaryReportGenerator.STRATEGY,

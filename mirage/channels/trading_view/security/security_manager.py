@@ -17,7 +17,7 @@ class SecurityManager:
         self._request = request
 
     async def perform_security_validation(self) -> dict[str, any]:
-        security_methods: list[dict[str, any]] = ConfigManager.config.get(self.CONFIG_KEY_SECURITY_METHODS)
+        security_methods: list[dict[str, any]] = ConfigManager.config.get(SecurityManager.CONFIG_KEY_SECURITY_METHODS)
         for security_method in security_methods:
             try:
                 name = security_method['name']

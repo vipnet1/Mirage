@@ -56,7 +56,7 @@ class WebhookServer:
         self.app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
         self.app.add_middleware(SlowAPIMiddleware)
 
-        @self.app.post(ConfigManager.config.get(self.KEY_WEBHOOK_SERVER_ENDPOINT))
+        @self.app.post(ConfigManager.config.get(WebhookServer.KEY_WEBHOOK_SERVER_ENDPOINT))
         async def webhook_endpoint(request: Request):
             request_data = await _authenticate(request)
             asyncio.create_task(_process_webhook(request_data))
@@ -66,10 +66,10 @@ class WebhookServer:
         server = uvicorn.Server(
             uvicorn.Config(
                 self.app,
-                host=ConfigManager.config.get(self.KEY_HOST),
-                port=ConfigManager.config.get(self.KEY_PORT),
-                ssl_keyfile=ConfigManager.config.get(self.KEY_SSL_KEYFILE),
-                ssl_certfile=ConfigManager.config.get(self.KEY_SSL_CERTFILE),
+                host=ConfigManager.config.get(WebhookServer.KEY_HOST),
+                port=ConfigManager.config.get(WebhookServer.KEY_PORT),
+                ssl_keyfile=ConfigManager.config.get(WebhookServer.KEY_SSL_KEYFILE),
+                ssl_certfile=ConfigManager.config.get(WebhookServer.KEY_SSL_CERTFILE),
                 log_config=self._get_logging_config()
             )
         )

@@ -39,7 +39,7 @@ class MirageSecurity(SecurityMethod):
 
     def _validate_hash(self, message_content: str, message_hash: str) -> None:
         sha256_hash = hashlib.sha256()
-        sha256_hash.update((message_content + self._method_config.get(self.CONFIG_SECRET_KEY)).encode())
+        sha256_hash.update((message_content + self._method_config.get(MirageSecurity.CONFIG_SECRET_KEY)).encode())
 
         if sha256_hash.hexdigest() == message_hash:
             return
@@ -67,7 +67,7 @@ class MirageSecurity(SecurityMethod):
 
     def _decrypt_data(self, data: str) -> dict[str, any]:
         decrypted_data = self._create_bytearray_from_data(data)
-        for key in self._method_config.get(self.CONFIG_XOR_KEYS):
+        for key in self._method_config.get(MirageSecurity.CONFIG_XOR_KEYS):
             for index, _ in enumerate(decrypted_data):
                 decrypted_data[index] ^= ord(key[index % len(key)])
 

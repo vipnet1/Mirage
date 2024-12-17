@@ -1,0 +1,14 @@
+{
+    "strategy_manager": {
+        "name": "binance-strategy-manager",
+        "allocated_capital": 80,
+        "capital_pool": 0,
+        "min_entry_capital": 10,
+        "strategy_capital": 0,
+        "capital_flow": 0,
+        "base_currency": "USDT",
+        "is_active": true,
+        "wallet": "spot"
+    },
+    "strategy": {}
+}

@@ -1,0 +1,42 @@
+{
+    "channels": {
+        "telegram": {
+            "token": "",
+            "chat_id": ""
+        },
+        "tradingview": {
+            "security_methods": [
+                {
+                    "name": "mirage-security",
+                    "config": {
+                        "xor_keys": [
+                            "",
+                            "",
+                            ""
+                        ],
+                        "secret_key": ""
+                    }
+                }
+            ],
+            "host": "",
+            "port": 443,
+            "ssl_keyfile": "",
+            "ssl_certfile": "",
+            "webhook_server_endpoint": ""
+        }
+    },
+    "brokers": {
+        "binance": {
+            "api_key": "",
+            "secret_key": ""
+        }
+    },
+    "databases": {
+        "mongo": {
+            "database_connection_string": ""
+        },
+        "drive": {
+            "mirage_folder_id": ""
+        }
+    }
+}

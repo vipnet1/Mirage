@@ -8,13 +8,13 @@ You need python knowledge to understand the code. You are welcome to read the so
 : )
 
 ## What Is It ##
-Mirage is a framework to help you automating all aspects of trading, except of the entry/exit conditions themselves. \
-You can imagine Mirage as a middleware. External source, let's say TradingView, sends that it found an entry or exit point for trade. Mirage will actually perform the trade, manage the risk, generate logs/db records/reports so you can check trade performance.
+Mirage is a framework to help you automate all aspects of trading, except the entry/exit conditions themselves. \
+You can imagine Mirage as a middleware. External source, let's say TradingView, sends that it found an entry or exit point for trade. Mirage will actually perform the trade, manage the risk, generate logs/db records/reports so you can check strategy performance.
 
 ### Features ###
 - API to send trade or other commands to the broker
 - API to receive commands for processing
-- Generating reports on trades performance for investigation
+- Logging & Generating reports on trades performance for investigation
 
 ### Why Entry & Exit signals not handled by Mirage ###
 Strategies can be complex. They can include many indicators, conditions, require efficient candles processing etc. \
@@ -35,12 +35,12 @@ And then people can via a few lines of code modification build a version of Mira
 
 The strategy itself can be kept a secret because it is not located in Mirage. It removes the incentive to hide Mirage code and can enhance contribution.
 
-## In Practive ###
-Mirage was build for personal use, with focus on integration with TradingView & Binance.
+## In Practice ###
+Mirage was built for personal use, with focus on integration with TradingView & Binance.
 
 - It receives commands from TradingView PineScript to perform trade
 - Manage Mirage via commands from Telegram 
-- It communicates Binance to perform the needed operations
+- It communicates Binance to perform trades
 - Provides a way to check strategy performance via various commands & logging mechanisms
 
 ## Available Components ##
@@ -52,7 +52,7 @@ Mirage was build for personal use, with focus on integration with TradingView & 
 - Telegram
 
 ### Databases ###
-- Mongo
+- MongoDB
 
 ### Brokers ###
 - Binance
@@ -73,8 +73,8 @@ We will go over some important folders & concepts.
 * mirage/config -> Handling configurations.
 mirage/database -> API to different databases or storate methods.
 * mirage/jobs -> Scheduled tasks that can be run every some time.
-* mirage/performance -> Generating info to investigate strategy performance and relevant metrics
-* mirage/strategy -> Handles different trading commands received from some channel
+* mirage/performance -> Generating info to investigate strategy performance and relevant metrics.
+* mirage/strategy -> Handles different trading commands received from some channel.
 * mirage/strategy_manager -> It's basically a bank. It transfers money to strategies so they can use it for trades & manages money.
 
 ## Algorithms ##

@@ -41,7 +41,7 @@ Mirage was build for personal use, with focus on integration with TradingView & 
 - It receives commands from TradingView PineScript to perform trade
 - Manage Mirage via commands from Telegram 
 - It communicates Binance to perform the needed operations
-- Provies a way to check strategy performance via various commands & logging mechanisms
+- Provides a way to check strategy performance via various commands & logging mechanisms
 
 ## Available Components ##
 ### Channels ###
@@ -67,7 +67,7 @@ Mirage was build for personal use, with focus on integration with TradingView & 
 # Entering The Codebase #
 ## Key Components ##
 We will go over some important folders & concepts.
-* mirage/algorithm -> raw operations involving contacting broker. Borrowing funds, buying, selling etc.
+* mirage/algorithm -> Raw operations involving contacting broker. Borrowing funds, buying, selling etc.
 * mirage/brokers -> The API to brokers used by the algorithms.
 * mirage/channels -> What sources Mirage receives commands from & sends data to.
 * mirage/config -> Handling configurations.
@@ -95,7 +95,7 @@ Telegram used to receive commands from user, and send different information back
 ## Config ##
 As Mirage open source, you need a place to hide your secrets. That's the .config folder.
 
-Put there API Keys, strategies configuration aand other sensitive files.
+Put there API Keys, strategies configuration and other sensitive files.
 
 It supports division to environments. For example you could have 'prod' and 'dev' environment, and configure mirage to use one or another via changing variable in consts file.
 
@@ -105,15 +105,23 @@ See .example_config folder for required .config folder structure.
 Put there logic relevant to generating data for processing to learn different insights about strategies.
 
 ## Strategy ##
-It's a bit tricky, as we said there are no strategies in Mirage. And it's still correct - stuff like buy on lower bb sel on higher is not on Mirage.
+It's a bit tricky, as we said there are no strategies in Mirage. And it's still correct - stuff like buy on lower bb sell on higher is not on Mirage.
 
-So what are strategies then? those are handlers for the real strategies, like TradingView PineScript, that process their commands nd perform the needed actions.
+So what are strategies then? those are handlers for the real strategies, like TradingView PineScript, that process their commands and perform the needed actions.
 
 Those Mirage Strategies manage risk correctly and execute algorithms to perform trades, or simple tasks like buying some bitcoin.
 
+Strategies have their own configuration section. Each strategy can have multiple instances, and each instance has a separate configuration file. \
+For example you execute strategy A on BTC/USDT and ETH/USDT chart. You can create two strategy configuration files - one let's say btc.json and the other eth.json.
+
+This way you can configure btc.json to have 100$ allocated for the stratgegy and eth.json 500$, you can configure that with btc you can lose up to 5% per trade and with eth 2% and so on. \
+Also the profits & losses calculated for each strategy+instance separately.
+
+Anyway the main point is that you want to have separate strategy configuration file for each chart.
+
 ## Strategy Manager ##
 Mirage can handle many strategies, many trade and exit signals, thanks to Strategy Managers. \
-The idea is that they are like the bank that decides whether to execute strategy, whether it's enabled, whether haave funds etc.
+The idea is that they are like the bank that decides whether to execute strategy, whether it's enabled, whether have funds etc.
 
 It is responsible for transferring funds to the strategy, and from the strategy when it is finished and recording trade profits or losses.
 
@@ -123,11 +131,11 @@ Mirage stores information in two main ways: logs and database(currently mongo on
 ## Other Important Concepts ##
 ### MirageDict ###
 Just improvement on regular dict. You can do: \
-`mydict['abc.def.ghi']` \
+`miragedict.get('abc.def.ghi')` \
 instead of \
 `mydict['abc']['def']['ghi']`
 
-Some objects, like the Config, inherit from MirageDict.
+Some objects, like Config, inherit from MirageDict.
 
 ### Init Files ###
 Many python init files include variables that enable different components, like channels, telegram commands, jobs, strategies and so on. Configure them as you wish.
@@ -162,6 +170,11 @@ Set the SELECTED_ENVIRONMENT variable in consts file to your selected environmen
 As mirage listens on https ports, you may need administrator privileges. \
 On linux: \
 `sudo .venv/bin/python main.py`
+
+## Terminating Mirage ##
+Currently you can do it via:
+- Pressing CTRL+C key on console
+- Sending terminate command via telegram
 
 # Using Mirage For Trading #
 Will expand on how I'm using it.

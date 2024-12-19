@@ -17,7 +17,7 @@ from mirage.strategy.strategy import Strategy
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.utils.dict_utils import dataclass_to_dict
 from mirage.utils.multi_logging import log_and_send
-from mirage.utils.symbol_utils import floor_coin_amount, get_base_symbol
+from mirage.utils.symbol_utils import floor_amount, floor_coin_amount, get_base_symbol
 
 
 class CryptoPairTrading(Strategy):
@@ -385,8 +385,10 @@ class CryptoPairTrading(Strategy):
         )
         reduction = self._transfer_amount / long_capital
 
-        self._longed_capital = self._transfer_amount * reduction
-        self._shorted_amount = short_amount * reduction
+        # ccxt checks number of decimals in each coin and sends request correctly. But Binance may not return this info sometimes.
+        # To reduce error rate leave only 8 decimals, as BTC the largest one and uses 8 so it will be fine with other cryptos too.
+        self._longed_capital = floor_amount(self._transfer_amount * reduction, 8)
+        self._shorted_amount = floor_amount(short_amount * reduction, 8)
 
     async def _exception_revert_internal(self) -> bool:
         data_action = self.strategy_data.get(CryptoPairTrading.DATA_ACTION)

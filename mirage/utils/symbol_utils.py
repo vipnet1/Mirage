@@ -12,12 +12,12 @@ def get_quote_symbol(symbol: str) -> str:
 
 def floor_coin_amount(name: str, amount: float) -> float:
     if name == consts.COIN_NAME_USDT:
-        return _floor(amount, 5)
+        return floor_amount(amount, 5)
 
-    return _floor(amount, 3)
+    return floor_amount(amount, 8)
 
 
-def _floor(number: float, decimals: int) -> float:
+def floor_amount(number: float, decimals: int) -> float:
     scaled_number = number * (10 ** decimals)
     floored_number = math.floor(scaled_number)
     return floored_number / (10 ** decimals)

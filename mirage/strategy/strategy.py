@@ -36,13 +36,18 @@ class Strategy:
         self.strategy_name = strategy_name
         self.strategy_instance = strategy_instance
 
-        self.strategy_instance_config = ConfigManager.fetch_strategy_instance_config(self.strategy_name, self.strategy_instance)
+        self.strategy_instance_config = None
 
         self.allocated_capital: VariableReference = None
         self.strategy_capital: VariableReference = None
         self.capital_flow: VariableReference = None
 
         self._actions_track = []
+
+        self.fetch_strategy_config()
+
+    def fetch_strategy_config(self):
+        self.strategy_instance_config = ConfigManager.fetch_strategy_instance_config(self.strategy_name, self.strategy_instance)
 
     @abstractmethod
     async def should_execute_strategy(self, available_capital: float) -> tuple[bool, PreExecutionStatus, dict[str, any]]:

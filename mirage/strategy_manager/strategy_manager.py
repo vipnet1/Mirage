@@ -63,12 +63,14 @@ class StrategyManager:
         raise NotImplementedError()
 
     async def process_strategy(self) -> None:
-        is_entry = self._strategy.is_entry()
-        if self._is_suspent(is_entry):
-            return
-
         try:
             await TaskManager.wait_for_turn(StrategyManager.TASK_GROUP_TRADE_REQUESTS, generate_key(20))
+            self._strategy.fetch_strategy_config()
+
+            is_entry = self._strategy.is_entry()
+            if self._is_suspent(is_entry):
+                return
+
             await self._process_strategy_internal(is_entry)
         finally:
             TaskManager.finish_turn(StrategyManager.TASK_GROUP_TRADE_REQUESTS)

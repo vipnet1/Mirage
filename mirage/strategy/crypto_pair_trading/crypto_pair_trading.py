@@ -387,6 +387,7 @@ class CryptoPairTrading(Strategy):
 
         # ccxt checks number of decimals in each coin and sends request correctly. But Binance may not return this info sometimes.
         # To reduce error rate leave only 8 decimals, as BTC the largest one and uses 8 so it will be fine with other cryptos too.
+        # But actually, seems like Binance allows to borrow even the cheapest coins using 8 digits. So it should be good for all coins.
         self._longed_capital = floor_amount(self._transfer_amount * reduction, 8)
         self._shorted_amount = floor_amount(short_amount * reduction, 8)
 

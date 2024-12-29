@@ -30,6 +30,7 @@ class MirageAlgorithm:
         self._request_data_id = request_data_id
         self.commands = commands
         self.command_results = []
+        self.custom_params = {}
 
     @abstractmethod
     async def _process_command(self, command: dataclass) -> None:
@@ -58,6 +59,7 @@ class MirageAlgorithm:
                 'request_data_id': self._request_data_id,
                 'broker': Binance.BINANCE,
                 'commands': [dataclass_to_dict(command) for command in self.commands],
-                'command_results': self.command_results
+                'command_results': self.command_results,
+                'custom_params': self.custom_params
             }
         )

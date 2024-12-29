@@ -40,15 +40,9 @@ class StrategyManager:
         self._strategy = strategy
         self._mirage_performance = MiragePerformance()
 
-        self._allocated_capital = VariableReference(
-            self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_ALLOCATED_CAPITAL)
-        )
-        self._strategy_capital = VariableReference(
-            self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_STRATEGY_CAPITAL)
-        )
-        self._capital_flow = VariableReference(
-            self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_CAPITAL_FLOW)
-        )
+        self._allocated_capital = None
+        self._strategy_capital = None
+        self._capital_flow = None
 
     @abstractmethod
     async def _transfer_capital_to_strategy(self, amount: float) -> None:
@@ -65,7 +59,9 @@ class StrategyManager:
     async def process_strategy(self) -> None:
         try:
             await TaskManager.wait_for_turn(StrategyManager.TASK_GROUP_TRADE_REQUESTS, generate_key(20))
+
             self._strategy.fetch_strategy_config()
+            self._init_capital_variables()
 
             is_entry = self._strategy.is_entry()
             if self._is_suspent(is_entry):
@@ -74,6 +70,17 @@ class StrategyManager:
             await self._process_strategy_internal(is_entry)
         finally:
             TaskManager.finish_turn(StrategyManager.TASK_GROUP_TRADE_REQUESTS)
+
+    def _init_capital_variables(self):
+        self._allocated_capital = VariableReference(
+            self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_ALLOCATED_CAPITAL)
+        )
+        self._strategy_capital = VariableReference(
+            self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_STRATEGY_CAPITAL)
+        )
+        self._capital_flow = VariableReference(
+            self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_CAPITAL_FLOW)
+        )
 
     async def _process_strategy_internal(self, is_entry: bool) -> None:
         execution_status = StrategyExecutionStatus.RETURN_FUNDS

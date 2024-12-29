@@ -131,7 +131,7 @@ class CryptoPairTrading(Strategy):
 
     async def _try_borrow_funds(self) -> None:
         try:
-            await borrow_algorithm.BorrowAlgorithm(
+            ba = borrow_algorithm.BorrowAlgorithm(
                 self.capital_flow,
                 self.request_data_id,
                 [
@@ -142,10 +142,18 @@ class CryptoPairTrading(Strategy):
                         amount=self._shorted_amount
                     )
                 ]
-            ).execute()
+            )
+            await ba.execute()
+
             self._actions_track.append({
                 CryptoPairTrading.ACTION_PARAM_NAME: CryptoPairTrading.ACTION_NAME_BORROWED
             })
+
+            amount = ba.custom_params[borrow_algorithm.BorrowAlgorithm.PARAM_ACTUALLY_BORROWED_AMOUNT]
+            if amount != self._shorted_amount:
+                logging.info('Actual borrowed amount changed cause of currency precision to %s', amount)
+                self._shorted_amount = amount
+
         except NoLendersException as exc:
             await log_and_send(
                 logging.warning, ChannelsManager.get_communication_channel(),

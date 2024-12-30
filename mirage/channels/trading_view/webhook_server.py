@@ -22,6 +22,9 @@ async def _authenticate(request: Request) -> dict[str, any]:
 
     except Exception:
         # pylint: disable=raise-missing-from
+        await ChannelsManager.get_communication_channel().send_message(
+            'Unauthorized request to correct Mirage endpoint.\nIs someone trying to attack Mirage?\nInvestigate farther & consider changing endpoint.'
+        )
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 

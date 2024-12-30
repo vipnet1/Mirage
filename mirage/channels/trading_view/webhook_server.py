@@ -29,12 +29,6 @@ async def _authenticate(request: Request) -> dict[str, any]:
 
 
 async def _process_webhook(request_data) -> dict[str, any]:
-    if ConfigManager.execution_config.get(consts.EXECUTION_CONFIG_KEY_TERMINATE):
-        logging.warning('Ignoring tradingview command - awaiting termination.')
-        return
-
-    ChannelsManager.channels[consts.CHANNEL_TRADING_VIEW].active_operations.variable += 1
-
     try:
         webhook_handler = WebhookHandler(request_data)
         await webhook_handler.process_request()
@@ -42,8 +36,6 @@ async def _process_webhook(request_data) -> dict[str, any]:
     except Exception as exc:
         logging.exception(exc)
         await ChannelsManager.get_communication_channel().send_message(f'Exception processing webhook request:\n {traceback.format_exc()}')
-
-    ChannelsManager.channels[consts.CHANNEL_TRADING_VIEW].active_operations.variable -= 1
 
 
 class WebhookServer:
@@ -61,8 +53,12 @@ class WebhookServer:
 
         @self.app.post(ConfigManager.config.get(WebhookServer.KEY_WEBHOOK_SERVER_ENDPOINT))
         async def webhook_endpoint(request: Request):
+            ChannelsManager.channels[consts.CHANNEL_TRADING_VIEW].active_operations.variable += 1
+
             request_data = await _authenticate(request)
             asyncio.create_task(_process_webhook(request_data))
+
+            ChannelsManager.channels[consts.CHANNEL_TRADING_VIEW].active_operations.variable -= 1
             return {"status": "success"}
 
     async def run_server(self) -> None:

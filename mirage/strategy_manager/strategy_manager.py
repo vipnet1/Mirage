@@ -149,7 +149,9 @@ class StrategyManager:
 
         except Exception as exc:
             logging.critical('Failed transferring money out of strategy.')
-            logging.exception('Previously another exception occurred.', exc_info=exception_cache)
+            if exception_cache is not None:
+                logging.exception('Previously another exception occurred.', exc_info=exception_cache)
+
             raise exc
 
         finally:

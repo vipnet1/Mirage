@@ -220,6 +220,7 @@ class CryptoPairTrading(Strategy):
         await soa.execute()
 
         result = soa.command_results[0]
+        self._longed_capital = result['cost']
         self._longed_amount = result['amount']
 
     async def _entry_sell_short_coins(self):
@@ -330,7 +331,7 @@ class CryptoPairTrading(Strategy):
             [
                 fetch_tickers_algorithm.Command(
                     strategy=self.__class__.__name__,
-                    description='Fetching pair trading coins price to check if enough funds to enter position',
+                    description='Fetching pair trading coins price to calculate amount & cost to enter with',
                     symbols=[self._longed_coin, self._shorted_coin],
                 )
             ]

@@ -105,7 +105,7 @@ async def update_mirage():
     await run_command_async('git pull origin ' + consts.MIRAGE_MAIN_BRANCH)
     os.execv(
         get_python_exe(),
-        [__file__] if platform.system() == consts.PLATFORM_NAME_WINDOWS else [f'.\\{__file__}']
+        [f'.\\{__file__}'] if platform.system() == consts.PLATFORM_NAME_WINDOWS else [__file__]
     )
 
 

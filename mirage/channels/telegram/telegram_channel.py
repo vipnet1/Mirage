@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import logging
+import os
+import tempfile
 import traceback
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes
@@ -74,6 +76,8 @@ class TelegramChannel(CommunicationChannel):
     KEY_TOKEN = 'channels.telegram.token'
     KEY_CHAT_ID = 'channels.telegram.chat_id'
 
+    MAX_CHARS_CAN_SEND = 4096
+
     def __init__(self):
         super().__init__()
         self._application = ApplicationBuilder().token(ConfigManager.config.get(TelegramChannel.KEY_TOKEN)).build()
@@ -92,7 +96,16 @@ class TelegramChannel(CommunicationChannel):
         await self._application.shutdown()
 
     async def send_message(self, message: str) -> None:
-        await self._application.bot.send_message(chat_id=self._chat_id, text=message)
+        if len(message) <= TelegramChannel.MAX_CHARS_CAN_SEND:
+            await self._application.bot.send_message(chat_id=self._chat_id, text=message)
+            return
+
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+            filepath = temp_file.name
+            temp_file.write(message)
+
+        await self.send_file(filepath, 'command_output.txt')
+        os.remove(filepath)
 
     async def send_file(self, file_path: str, filename: str) -> None:
         with open(file_path, 'rb') as fp:

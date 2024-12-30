@@ -1,4 +1,5 @@
 import json
+from mirage.channels.channels_manager import ChannelsManager
 from mirage.channels.telegram.exceptions import MirageTelegramException
 from mirage.channels.telegram.telegram_command import TelegramCommand
 from mirage.config.config import Config
@@ -46,7 +47,7 @@ class UpdateConfigCommand(TelegramCommand):
         else:
             self._update_strategy_config(key_to_update)
 
-        await self._context.bot.send_message(self._update.effective_chat.id, 'Done!')
+        await ChannelsManager.get_communication_channel().send_message('Done!')
 
     def _update_main_config(self, key_to_update: str) -> None:
         config_update = Config(json.loads(self._clean_text), 'Update main config')

@@ -103,6 +103,8 @@ def _check_termination_flag():
 
 async def update_mirage():
     await run_command_async('git pull origin ' + consts.MIRAGE_MAIN_BRANCH)
+    logging.info('exe: ' + get_python_exe())
+    logging.info('param: ' + str([f'.\\{__file__}'] if platform.system() == consts.PLATFORM_NAME_WINDOWS else [__file__]))
     os.execv(
         get_python_exe(),
         [f'.\\{__file__}'] if platform.system() == consts.PLATFORM_NAME_WINDOWS else [__file__]

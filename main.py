@@ -4,6 +4,7 @@ from pathlib import Path
 import platform
 import signal
 import logging
+import subprocess
 
 from mirage.config.config_manager import ConfigManager
 from mirage.jobs.mirage_job_manager import MirageJobManager
@@ -74,7 +75,7 @@ async def main():
     signal.signal(signal.SIGINT, signal_handler)
 
     job_manager = MirageJobManager([
-        SelfUpdateJob(15)
+        SelfUpdateJob(5)
     ])
 
     logging.info('Main loop running')
@@ -103,12 +104,9 @@ def _check_termination_flag():
 
 async def update_mirage():
     await run_command_async('git pull origin ' + consts.MIRAGE_MAIN_BRANCH)
-    logging.info('exe: ' + get_python_exe())
-    logging.info('param: ' + str([f'.\\{__file__}'] if platform.system() == consts.PLATFORM_NAME_WINDOWS else [__file__]))
-    os.execv(
-        get_python_exe(),
-        [f'.\\{__file__}'] if platform.system() == consts.PLATFORM_NAME_WINDOWS else [__file__]
-    )
+
+    exe = get_python_exe()
+    os.execvp(exe, [exe, __file__])
 
 
 def get_python_exe():

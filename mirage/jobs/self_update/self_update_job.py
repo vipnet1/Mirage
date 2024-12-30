@@ -10,7 +10,7 @@ class SelfUpdateJob(MirageJob):
         await run_command_async('git fetch origin')
         _, remote = await self._get_status()
 
-        if True:
+        if remote > 0:
             logging.info('Newer mirage version detected.')
             ConfigManager.execution_config.set(consts.EXECUTION_CONFIG_KEY_UPDATE, True)
             ConfigManager.execution_config.set(consts.EXECUTION_CONFIG_KEY_TERMINATE, True)

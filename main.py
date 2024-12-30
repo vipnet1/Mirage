@@ -4,7 +4,6 @@ from pathlib import Path
 import platform
 import signal
 import logging
-import subprocess
 
 from mirage.config.config_manager import ConfigManager
 from mirage.jobs.mirage_job_manager import MirageJobManager
@@ -75,7 +74,7 @@ async def main():
     signal.signal(signal.SIGINT, signal_handler)
 
     job_manager = MirageJobManager([
-        SelfUpdateJob(5)
+        SelfUpdateJob(60)
     ])
 
     logging.info('Main loop running')

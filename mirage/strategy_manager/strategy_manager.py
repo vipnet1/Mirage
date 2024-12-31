@@ -125,6 +125,15 @@ class StrategyManager:
                         f'Strategy wants to transfer {transfer_amount} of base currency, when max given is {available_capital}'
                     )
 
+            if is_entry and transfer_amount < min_entry_capital:
+                await log_and_send(
+                    logging.warning, ChannelsManager.get_communication_channel(),
+                    f'Strategy {self._strategy.strategy_name}, instance {self._strategy.strategy_instance}'
+                    + f' wants to transfer {transfer_amount} when min is {min_entry_capital}. Ignoring request. '
+                    + 'Consider increasing allocated capital or max loss percent.'
+                )
+                return
+
             await self._maybe_transfer_capital_to_strategy(transfer_amount)
 
             self._strategy.strategy_capital = self._strategy_capital

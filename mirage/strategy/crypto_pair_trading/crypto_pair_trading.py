@@ -21,6 +21,15 @@ from mirage.utils.symbol_utils import floor_amount, floor_coin_amount, get_base_
 
 
 class CryptoPairTrading(Strategy):
+    """
+    Must have BNB in margin wallet. Otherwise will be fees relevant exceptions.
+    As Binance for very cheap coins may not use BNB to pay trading commission fees even if relevant settings enabled(view documentation), we
+    may deduct fee from amount & cost when buying coins if BNB was not used for fees.
+    Note that when buying, fee deducted from base currency, and when selling from quote currency - if BNB not used of course.
+    So we do those deductions when buying coins only as then base currency may be too cheap. We suppose quote currency(USDT) price is fine.
+    This may cause the need to repay small amounts maanually or spare quote currency that was not returned to main wallet.
+    """
+
     description = 'Go long & short on pairs. Binance margin account.'
 
     NOTIFY_BIG_RATIO_PERCENT = 30
@@ -99,6 +108,7 @@ class CryptoPairTrading(Strategy):
             self._longed_amount = self._existing_position.longed_amount
             self._shorted_coin = self._existing_position.shorted_coin
             self._shorted_amount = self._existing_position.shorted_amount
+
         else:
             raise CryptoPairTradingException(f'Invalid action {action} with chart pair {pair_raw}')
 
@@ -223,6 +233,11 @@ class CryptoPairTrading(Strategy):
         self._longed_capital = result['cost']
         self._longed_amount = result['amount']
 
+        # If fee paid using this same coin deduct the fee from output
+        fee_data = result['fee']
+        if fee_data and fee_data['currency'] == get_base_symbol(self._longed_coin):
+            self._longed_amount = floor_coin_amount(self._longed_coin, self._longed_amount - fee_data['cost'])
+
     async def _entry_sell_short_coins(self):
         # As we borrowed exact coins amount we sell this exact amount
         soa = simple_order_algorithm.SimpleOrderAlgorithm(
@@ -278,8 +293,8 @@ class CryptoPairTrading(Strategy):
         ).execute()
 
     async def _exit_buy_shorted_coins(self):
-        # we need to buy an exact amount of shorted coins to repay them
-        await simple_order_algorithm.SimpleOrderAlgorithm(
+        # We need to buy an exact amount of shorted coins to repay them.
+        soa = simple_order_algorithm.SimpleOrderAlgorithm(
             self.capital_flow,
             self.request_data_id,
             [
@@ -294,7 +309,14 @@ class CryptoPairTrading(Strategy):
                     price=None
                 )
             ],
-        ).execute()
+        )
+        await soa.execute()
+
+        # If fee paid this coin deduct the fee from output.
+        result = soa.command_results[0]
+        fee_data = result['fee']
+        if fee_data and fee_data['currency'] == get_base_symbol(self._shorted_coin):
+            self._shorted_amount = floor_coin_amount(self._shorted_coin, self._shorted_amount - fee_data['cost'])
 
     async def _repay_borrowed_funds(self):
         await borrow_algorithm.BorrowAlgorithm(

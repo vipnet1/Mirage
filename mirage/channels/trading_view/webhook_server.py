@@ -34,6 +34,9 @@ async def _process_webhook(request_data) -> dict[str, any]:
         logging.exception(exc)
         await ChannelsManager.get_communication_channel().send_message(f'Exception processing webhook request:\n {traceback.format_exc()}')
 
+    finally:
+        ChannelsManager.channels[consts.CHANNEL_TRADING_VIEW].active_operations.variable -= 1
+
 
 class WebhookServer:
     KEY_HOST = 'channels.tradingview.host'
@@ -54,8 +57,6 @@ class WebhookServer:
 
             request_data = await _authenticate(request)
             asyncio.create_task(_process_webhook(request_data))
-
-            ChannelsManager.channels[consts.CHANNEL_TRADING_VIEW].active_operations.variable -= 1
             return {"status": "success"}
 
     async def run_server(self) -> None:

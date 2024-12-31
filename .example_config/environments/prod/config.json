@@ -14,7 +14,8 @@
                             "",
                             ""
                         ],
-                        "secret_key": ""
+                        "secret_key": "",
+                        "notify_failure": true
                     }
                 }
             ],

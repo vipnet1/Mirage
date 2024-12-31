@@ -34,7 +34,7 @@ def _logging_filter(record: logging.LogRecord) -> bool:
     if 'Exception happened while polling for updates' in message:
         return False
 
-    if 'HTTP/' in message and ' 404' in message:
+    if 'HTTP/1.1" 404' in message:
         return False
 
     return True

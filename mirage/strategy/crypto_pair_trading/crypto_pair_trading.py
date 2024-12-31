@@ -92,7 +92,7 @@ class CryptoPairTrading(Strategy):
 
         elif action == CryptoPairTrading.ACTION_EXIT:
             if not self._existing_position:
-                logging.warning("Can't exit position as not in active with chart pair %s", pair_raw)
+                logging.warning("Can't exit position as not in active trade with chart pair %s", pair_raw)
                 return False, None, None
 
             self._longed_coin = self._existing_position.longed_coin

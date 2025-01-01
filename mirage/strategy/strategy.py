@@ -3,10 +3,9 @@ import logging
 import traceback
 
 from mirage.channels.channels_manager import ChannelsManager
-from mirage.config.config_manager import ConfigManager
+from mirage.config.config import Config
 from mirage.strategy.pre_execution_status import PreExecutionStatus
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
-from mirage.utils.mirage_dict import MirageDict
 from mirage.utils.multi_logging import log_and_send
 from mirage.utils.variable_reference import VariableReference
 
@@ -30,24 +29,19 @@ class Strategy:
             strategy_data: dict[str, any],
             strategy_name: str,
             strategy_instance: str,
+            strategy_instance_config: Config
     ):
         self.request_data_id = request_data_id
-        self.strategy_data = MirageDict(strategy_data)
+        self.strategy_data = strategy_data
         self.strategy_name = strategy_name
         self.strategy_instance = strategy_instance
-
-        self.strategy_instance_config = None
+        self.strategy_instance_config = strategy_instance_config
 
         self.allocated_capital: VariableReference = None
         self.strategy_capital: VariableReference = None
         self.capital_flow: VariableReference = None
 
         self._actions_track = []
-
-        self.fetch_strategy_config()
-
-    def fetch_strategy_config(self):
-        self.strategy_instance_config = ConfigManager.fetch_strategy_instance_config(self.strategy_name, self.strategy_instance)
 
     @abstractmethod
     async def should_execute_strategy(self, available_capital: float) -> tuple[bool, PreExecutionStatus, dict[str, any]]:

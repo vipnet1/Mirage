@@ -8,11 +8,12 @@ from mirage.algorithm.borrow.exceptions import NoLendersException
 from mirage.algorithm.fetch_tickers import fetch_tickers_algorithm
 from mirage.algorithm.simple_order import simple_order_algorithm
 from mirage.channels.channels_manager import ChannelsManager
+from mirage.config.config import Config
 from mirage.database.mongo.common_operations import get_single_record, insert_dataclass, update_dataclass
 from mirage.strategy.crypto_pair_trading.exceptions import CryptoPairTradingException, SilentCryptoPairTradingException
 from mirage.strategy.crypto_pair_trading.pair_info_parser import PairInfoParser
 from mirage.strategy.crypto_pair_trading.position_info import PositionInfo
-from mirage.strategy.pre_execution_status import PARAM_TRANSFER_AMOUNT, PreExecutionStatus
+from mirage.strategy.pre_execution_status import PARAM_REPROCESS_TIME, PARAM_TRANSFER_AMOUNT, PreExecutionStatus
 from mirage.strategy.strategy import Strategy
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.utils.dict_utils import dataclass_to_dict
@@ -33,6 +34,7 @@ class CryptoPairTrading(Strategy):
     description = 'Go long & short on pairs. Binance margin account.'
 
     NOTIFY_BIG_RATIO_PERCENT = 30
+    REPROCESS_TIME = 5
 
     CONFIG_KEY_MAX_LOSS_PERCENT = 'strategy.max_loss_percent'
     CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
@@ -61,8 +63,9 @@ class CryptoPairTrading(Strategy):
             strategy_data: dict[str, any],
             strategy_name: str,
             strategy_instance: str,
+            strategy_instance_config: Config
     ):
-        super().__init__(request_data_id, strategy_data, strategy_name, strategy_instance)
+        super().__init__(request_data_id, strategy_data, strategy_name, strategy_instance, strategy_instance_config)
         self._existing_position = None
         self._pair_info = None
         self._longed_coin = None
@@ -91,7 +94,7 @@ class CryptoPairTrading(Strategy):
                 logging.warning(
                     "Can't enter new position: another one exists. Strategy instance %s, pair %s", self._existing_position.strategy_instance, pair_raw
                 )
-                return False, None, None
+                return None, PreExecutionStatus.REPROCESS, {PARAM_REPROCESS_TIME: CryptoPairTrading.REPROCESS_TIME}
 
             side = self.strategy_data.get(CryptoPairTrading.DATA_SIDE)
             if side not in [CryptoPairTrading.SIDE_LONG, CryptoPairTrading.SIDE_SHORT]:
@@ -102,7 +105,7 @@ class CryptoPairTrading(Strategy):
         elif action == CryptoPairTrading.ACTION_EXIT:
             if not self._existing_position:
                 logging.warning("Can't exit position as not in active trade with chart pair %s", pair_raw)
-                return False, None, None
+                return None, PreExecutionStatus.REPROCESS, {PARAM_REPROCESS_TIME: CryptoPairTrading.REPROCESS_TIME}
 
             self._longed_coin = self._existing_position.longed_coin
             self._longed_amount = self._existing_position.longed_amount

@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+import asyncio
 import logging
 
 import consts
@@ -6,8 +7,9 @@ from mirage.channels.channels_manager import ChannelsManager
 from mirage.config.config_manager import ConfigManager
 from mirage.config.suspend_state import SuspendState
 from mirage.performance.mirage_performance import InputTradePerformance, MiragePerformance
-from mirage.strategy.pre_execution_status import PARAM_TRANSFER_AMOUNT, PreExecutionStatus
-from mirage.strategy.strategy import Strategy, StrategySilentException
+from mirage.strategy.pre_execution_status import PARAM_REPROCESS_TIME, PARAM_TRANSFER_AMOUNT, PreExecutionStatus
+from mirage.strategy import enabled_strategies
+from mirage.strategy.strategy import StrategySilentException
 from mirage.strategy.strategy_execution_status import StrategyExecutionStatus
 from mirage.strategy_manager.exceptions import NotEnoughFundsException, StrategyManagerException
 from mirage.tasks.task_manager import TaskManager
@@ -21,6 +23,7 @@ class StrategyManager:
     __metaclass__ = ABCMeta
 
     TASK_GROUP_TRADE_REQUESTS = 'trade_requests'
+    MAX_REPROCESS_REQUESTS = 1
 
     description = ''
     # How many can be used by strategy in total
@@ -36,13 +39,28 @@ class StrategyManager:
     CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
     CONFIG_KEY_IS_ACTIVE = 'strategy_manager.is_active'
 
-    def __init__(self, strategy: Strategy):
-        self._strategy = strategy
-        self._mirage_performance = MiragePerformance()
+    def __init__(
+            self,
+            request_data_id: str,
+            strategy_data: dict[str, any],
+            strategy_name: str,
+            strategy_instance: str,
+    ):
+        self._request_data_id = request_data_id
+        self._strategy_data = strategy_data
+        self._strategy_name = strategy_name
+        self._strategy_instance = strategy_instance
+
+        self._strategy = None
 
         self._allocated_capital = None
         self._strategy_capital = None
         self._capital_flow = None
+
+        self._reprocess_time = None
+        self._reprocess_requests_count = 0
+
+        self._mirage_performance = MiragePerformance()
 
     @abstractmethod
     async def _transfer_capital_to_strategy(self, amount: float) -> None:
@@ -60,7 +78,14 @@ class StrategyManager:
         try:
             await TaskManager.wait_for_turn(StrategyManager.TASK_GROUP_TRADE_REQUESTS, generate_key(20))
 
-            self._strategy.fetch_strategy_config()
+            self._strategy = enabled_strategies[self._strategy_name](
+                self._request_data_id,
+                self._strategy_data,
+                self._strategy_name,
+                self._strategy_instance,
+                ConfigManager.fetch_strategy_instance_config(self._strategy_name, self._strategy_instance)
+            )
+
             self._init_capital_variables()
 
             is_entry = self._strategy.is_entry()
@@ -68,10 +93,30 @@ class StrategyManager:
                 return
 
             await self._process_strategy_internal(is_entry)
+
         finally:
             TaskManager.finish_turn(StrategyManager.TASK_GROUP_TRADE_REQUESTS)
+            self._strategy = None
 
-    def _init_capital_variables(self):
+            if self._reprocess_time is not None:
+                if self._reprocess_requests_count < StrategyManager.MAX_REPROCESS_REQUESTS:
+                    logging.info(
+                        'Request scheduled for reprocessing in %s seconds. Strategy: %s, Instance: %s.',
+                        self._reprocess_time, self._strategy_name, self._strategy_instance
+                    )
+
+                    await asyncio.sleep(self._reprocess_time)
+                    self._reprocess_time = None
+                    self._reprocess_requests_count += 1
+                    await self.process_strategy()
+                else:
+                    await log_and_send(
+                        logging.warning, ChannelsManager.get_communication_channel(),
+                        f'Reached max reprocess requests count: {StrategyManager.MAX_REPROCESS_REQUESTS}.\nRequest wont be reprocessed.'
+                        + f'\nStrategy: {self._strategy_name}, Instance: {self._strategy_instance}.'
+                    )
+
+    def _init_capital_variables(self) -> None:
         self._allocated_capital = VariableReference(
             self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_ALLOCATED_CAPITAL)
         )
@@ -99,7 +144,7 @@ class StrategyManager:
                 if self._allocated_capital.variable < min_entry_capital:
                     await log_and_send(
                         logging.warning, ChannelsManager.get_communication_channel(),
-                        f'Not enough allocated funds to strategy {self._strategy.strategy_name}, instance {self._strategy.strategy_instance}'
+                        f'Not enough allocated funds to strategy {self._strategy_name}, instance {self._strategy_instance}'
                         + f'. Minimal amount {min_entry_capital}. Consider allocating more.'
                     )
                     return
@@ -108,12 +153,17 @@ class StrategyManager:
                 if available_capital < min_entry_capital:
                     await log_and_send(
                         logging.warning, ChannelsManager.get_communication_channel(),
-                        f'Not enough funds to transfer money to strategy {self._strategy.strategy_name}, instance {self._strategy.strategy_instance}'
+                        f'Not enough funds to transfer money to strategy {self._strategy_name}, instance {self._strategy_instance}'
                         + f'. Minimal amount {min_entry_capital}. Consider increasing capital.'
                     )
                     return
 
             should_trade, status, params = await self._strategy.should_execute_strategy(available_capital)
+
+            if status == PreExecutionStatus.REPROCESS:
+                self._reprocess_time = params[PARAM_REPROCESS_TIME]
+                return
+
             if not should_trade:
                 return
 
@@ -129,7 +179,7 @@ class StrategyManager:
             if is_entry and transfer_amount < min_entry_capital:
                 await log_and_send(
                     logging.warning, ChannelsManager.get_communication_channel(),
-                    f'Strategy {self._strategy.strategy_name}, instance {self._strategy.strategy_instance}'
+                    f'Strategy {self._strategy_name}, instance {self._strategy_instance}'
                     + f' wants to transfer {transfer_amount} when min is {min_entry_capital}. Ignoring request. '
                     + 'Consider increasing allocated capital or max loss percent.'
                 )
@@ -187,7 +237,7 @@ class StrategyManager:
         self._strategy.strategy_instance_config.set(StrategyManager.CONFIG_KEY_STRATEGY_CAPITAL, self._strategy_capital.variable)
         self._strategy.strategy_instance_config.set(StrategyManager.CONFIG_KEY_CAPITAL_FLOW, self._capital_flow.variable)
         ConfigManager.update_strategy_config(
-            self._strategy.strategy_instance_config, self._strategy.strategy_name, self._strategy.strategy_instance, ''
+            self._strategy.strategy_instance_config, self._strategy_name, self._strategy_instance, ''
         )
 
     def _is_suspent(self, is_entry: bool) -> bool:
@@ -208,7 +258,7 @@ class StrategyManager:
 
         if self._allocated_capital.variable <= 0:
             raise StrategyManagerException('No allocated capital. Need to allocate more money.'
-                                           f'Strategy: {self._strategy.strategy_name}, Instance: {self._strategy.strategy_instance}')
+                                           f'Strategy: {self._strategy_name}, Instance: {self._strategy_instance}')
 
         await self._transfer_capital_to_strategy(transfer_amount)
 
@@ -219,7 +269,7 @@ class StrategyManager:
         if self._capital_flow.variable <= 0:
             logging.warning(
                 'No capital to transfer from strategy. Strategy: %s, Instance: %s',
-                self._strategy.strategy_name, self._strategy.strategy_instance
+                self._strategy_name, self._strategy_instance
             )
             return
 
@@ -231,9 +281,9 @@ class StrategyManager:
 
         if should_record_trade:
             self._mirage_performance.record_trade_performance(InputTradePerformance(
-                request_data_id=self._strategy.request_data_id,
-                strategy_name=self._strategy.strategy_name,
-                strategy_instance=self._strategy.strategy_instance,
+                request_data_id=self._request_data_id,
+                strategy_name=self._strategy_name,
+                strategy_instance=self._strategy_instance,
                 available_capital=self._strategy_capital.variable,
                 profit=self._capital_flow.variable - self._strategy_capital.variable
             ))
@@ -250,6 +300,6 @@ class StrategyManager:
 
         logging.warning(
             'Ignoring strategy %s, %s. It is deactivated.',
-            self._strategy.strategy_name, self._strategy.strategy_instance
+            self._strategy_name, self._strategy_instance
         )
         return False

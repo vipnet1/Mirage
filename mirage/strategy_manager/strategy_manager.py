@@ -85,6 +85,7 @@ class StrategyManager:
     async def _process_strategy_internal(self, is_entry: bool) -> None:
         execution_status = StrategyExecutionStatus.RETURN_FUNDS
         exception_cache = None
+        should_record_trade = False
 
         self._strategy.allocated_capital = self._allocated_capital
 
@@ -142,6 +143,8 @@ class StrategyManager:
             execution_status: StrategyExecutionStatus = await self._strategy.execute()
             logging.info('Executed strategy successfully')
 
+            should_record_trade = True
+
         except StrategySilentException:
             logging.error('Strategy execution silent exception occurred')
             await self._strategy.exception_revert()
@@ -154,7 +157,7 @@ class StrategyManager:
 
         try:
             if execution_status == StrategyExecutionStatus.RETURN_FUNDS:
-                await self._maybe_transfer_capital_from_strategy()
+                await self._maybe_transfer_capital_from_strategy(should_record_trade)
 
         except Exception as exc:
             logging.critical('Failed transferring money out of strategy.')
@@ -212,7 +215,7 @@ class StrategyManager:
         self._strategy_capital.variable = transfer_amount
         self._capital_flow.variable = transfer_amount
 
-    async def _maybe_transfer_capital_from_strategy(self) -> None:
+    async def _maybe_transfer_capital_from_strategy(self, should_record_trade: bool) -> None:
         if self._capital_flow.variable <= 0:
             logging.warning(
                 'No capital to transfer from strategy. Strategy: %s, Instance: %s',
@@ -226,13 +229,14 @@ class StrategyManager:
             self._capital_flow.variable
         )
 
-        self._mirage_performance.record_trade_performance(InputTradePerformance(
-            request_data_id=self._strategy.request_data_id,
-            strategy_name=self._strategy.strategy_name,
-            strategy_instance=self._strategy.strategy_instance,
-            available_capital=self._strategy_capital.variable,
-            profit=self._capital_flow.variable - self._strategy_capital.variable
-        ))
+        if should_record_trade:
+            self._mirage_performance.record_trade_performance(InputTradePerformance(
+                request_data_id=self._strategy.request_data_id,
+                strategy_name=self._strategy.strategy_name,
+                strategy_instance=self._strategy.strategy_instance,
+                available_capital=self._strategy_capital.variable,
+                profit=self._capital_flow.variable - self._strategy_capital.variable
+            ))
 
         await self._transfer_capital_from_strategy()
 

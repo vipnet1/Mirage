@@ -110,10 +110,9 @@ class StrategyManager:
                     self._reprocess_requests_count += 1
                     await self.process_strategy()
                 else:
-                    await log_and_send(
-                        logging.warning, ChannelsManager.get_communication_channel(),
-                        f'Reached max reprocess requests count: {StrategyManager.MAX_REPROCESS_REQUESTS}.\nRequest wont be reprocessed.'
-                        + f'\nStrategy: {self._strategy_name}, Instance: {self._strategy_instance}.'
+                    logging.warning(
+                        f'Reached max reprocess requests count: {StrategyManager.MAX_REPROCESS_REQUESTS}. Request wont be reprocessed.'
+                        + f' Strategy: {self._strategy_name}, Instance: {self._strategy_instance}.'
                     )
 
     def _init_capital_variables(self) -> None:

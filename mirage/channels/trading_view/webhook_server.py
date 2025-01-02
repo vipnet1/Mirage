@@ -55,7 +55,12 @@ class WebhookServer:
         async def webhook_endpoint(request: Request):
             ChannelsManager.channels[consts.CHANNEL_TRADING_VIEW].active_operations.variable += 1
 
-            request_data = await _authenticate(request)
+            try:
+                request_data = await _authenticate(request)
+            except Exception as exc:
+                ChannelsManager.channels[consts.CHANNEL_TRADING_VIEW].active_operations.variable -= 1
+                raise exc
+
             asyncio.create_task(_process_webhook(request_data))
             return {"status": "success"}
 

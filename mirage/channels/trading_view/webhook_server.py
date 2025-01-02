@@ -23,7 +23,8 @@ async def _authenticate(request: Request) -> dict[str, any]:
     except Exception:
         ChannelsManager.channels[consts.CHANNEL_TRADING_VIEW].active_operations.variable -= 1
         # pylint: disable=raise-missing-from
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        # 500 and not 401 for tradingview to retry send request
+        raise HTTPException(status_code=500, detail="Unauthorized")
 
 
 async def _process_webhook(request_data) -> dict[str, any]:

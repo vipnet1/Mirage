@@ -236,7 +236,7 @@ class CryptoPairTrading(Strategy):
         self._longed_capital = result['cost']
         self._longed_amount = result['amount']
 
-        # If fee paid using this same coin deduct the fee from output
+        # If fee paid using this coin deduct the fee from output
         fee_data = result['fee']
         if fee_data and fee_data['currency'] == get_base_symbol(self._longed_coin):
             self._longed_amount = floor_coin_amount(self._longed_coin, self._longed_amount - fee_data['cost'])
@@ -315,7 +315,7 @@ class CryptoPairTrading(Strategy):
         )
         await soa.execute()
 
-        # If fee paid this coin deduct the fee from output.
+        # If fee paid using this coin deduct the fee from output.
         result = soa.command_results[0]
         fee_data = result['fee']
         if fee_data and fee_data['currency'] == get_base_symbol(self._shorted_coin):

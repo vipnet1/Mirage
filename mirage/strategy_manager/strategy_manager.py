@@ -261,8 +261,13 @@ class StrategyManager:
 
         await self._transfer_capital_to_strategy(transfer_amount)
 
-        self._strategy_capital.variable = transfer_amount
-        self._capital_flow.variable = transfer_amount
+        # Tell strategy that transferred a bit less, to give room for miscalculations
+        floored = floor_coin_amount(
+            self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_BASE_CURRENCY),
+            transfer_amount
+        )
+        self._strategy_capital.variable = floored
+        self._capital_flow.variable = floored
 
     async def _maybe_transfer_capital_from_strategy(self, should_record_trade: bool) -> None:
         if self._capital_flow.variable <= 0:

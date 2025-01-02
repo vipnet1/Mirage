@@ -21,6 +21,7 @@ async def _authenticate(request: Request) -> dict[str, any]:
         return await SecurityManager(request).perform_security_validation()
 
     except Exception:
+        ChannelsManager.channels[consts.CHANNEL_TRADING_VIEW].active_operations.variable -= 1
         # pylint: disable=raise-missing-from
         raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -55,12 +56,7 @@ class WebhookServer:
         async def webhook_endpoint(request: Request):
             ChannelsManager.channels[consts.CHANNEL_TRADING_VIEW].active_operations.variable += 1
 
-            try:
-                request_data = await _authenticate(request)
-            except Exception as exc:
-                ChannelsManager.channels[consts.CHANNEL_TRADING_VIEW].active_operations.variable -= 1
-                raise exc
-
+            request_data = await _authenticate(request)
             asyncio.create_task(_process_webhook(request_data))
             return {"status": "success"}
 

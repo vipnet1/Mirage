@@ -28,7 +28,8 @@ class CryptoPairTrading(Strategy):
     may deduct fee from amount & cost when buying coins if BNB was not used for fees.
     Note that when buying, fee deducted from base currency, and when selling from quote currency - if BNB not used of course.
     So we do those deductions when buying coins only as then base currency may be too cheap. We suppose quote currency(USDT) price is fine.
-    This may cause the need to repay small amounts maanually or spare quote currency that was not returned to main wallet.
+    This may cause the need to repay small amounts manually or spare quote currency that was not returned to main wallet.
+    Also, have some spare base coin(quote currency, USDT) on margin wallet to allow small miscalculations.
     """
 
     description = 'Go long & short on pairs. Binance margin account.'

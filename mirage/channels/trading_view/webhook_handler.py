@@ -48,7 +48,7 @@ class WebhookHandler:
         )
         await strategy_manager.process_strategy()
 
-    def _get_strategy_manager(self, strategy_manager_name: Strategy, request_data_id: str) -> StrategyManager:
+    def _get_strategy_manager(self, strategy_manager_name: str, request_data_id: str) -> StrategyManager:
         if strategy_manager_name not in enabled_strategy_managers:
             raise WebhookRequestException(f'Strategy manager {strategy_manager_name} is not enabled.')
 
@@ -58,6 +58,7 @@ class WebhookHandler:
 
         strategy_instance_id = self._request_json.get(WebhookHandler.KEY_STRATEGY_INSTANCE_ID)
         return enabled_strategy_managers[strategy_manager_name](
+            strategy_manager_name,
             request_data_id,
             MirageDict(self._request_json.get(WebhookHandler.KEY_DATA)),
             strategy_name,

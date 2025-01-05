@@ -41,17 +41,20 @@ class StrategyManager:
 
     def __init__(
             self,
+            strategy_manager_name: str,
             request_data_id: str,
             strategy_data: dict[str, any],
             strategy_name: str,
             strategy_instance: str,
     ):
+        self._strategy_manager_name = strategy_manager_name
         self._request_data_id = request_data_id
         self._strategy_data = strategy_data
         self._strategy_name = strategy_name
         self._strategy_instance = strategy_instance
 
         self._strategy = None
+        self._strategy_manager_config = None
 
         self._allocated_capital = None
         self._strategy_capital = None
@@ -86,6 +89,7 @@ class StrategyManager:
                 ConfigManager.fetch_strategy_instance_config(self._strategy_name, self._strategy_instance)
             )
 
+            self._strategy_manager_config = ConfigManager.fetch_strategy_manager_config(self._strategy_manager_name)
             self._init_capital_variables()
 
             is_entry = self._strategy.is_entry()
@@ -97,6 +101,7 @@ class StrategyManager:
         finally:
             TaskManager.finish_turn(StrategyManager.TASK_GROUP_TRADE_REQUESTS)
             self._strategy = None
+            self._strategy_manager_config = None
 
             if self._reprocess_time is not None:
                 if self._reprocess_requests_count < StrategyManager.MAX_REPROCESS_REQUESTS:
@@ -217,6 +222,7 @@ class StrategyManager:
 
         finally:
             self._update_strategy_config()
+            self._update_strategy_manager_config()
 
         if exception_cache:
             raise exception_cache
@@ -237,6 +243,11 @@ class StrategyManager:
         self._strategy.strategy_instance_config.set(StrategyManager.CONFIG_KEY_CAPITAL_FLOW, self._capital_flow.variable)
         ConfigManager.update_strategy_config(
             self._strategy.strategy_instance_config, self._strategy_name, self._strategy_instance, ''
+        )
+
+    def _update_strategy_manager_config(self) -> None:
+        ConfigManager.update_strategy_manager_config(
+            self._strategy_manager_config, self._strategy_manager_name, ''
         )
 
     def _is_suspent(self, is_entry: bool) -> bool:

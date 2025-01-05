@@ -13,6 +13,7 @@ DRIVE_SERVICE_ACCOUNT_FILENAME = 'drive_service_account.json'
 CONFIG_FOLDER = '.config'
 CONFIG_ENVIRONMENTS_FOLDER = f'{CONFIG_FOLDER}/environments'
 STRATEGIES_CONFIG_FOLDER_NAME = 'strategies'
+STRATEGY_MANAGERS_CONFIG_FOLDER_NAME = 'strategy_managers'
 LOG_FOLDER = '.logs'
 
 DB_NAME_HISTORY = 'history'

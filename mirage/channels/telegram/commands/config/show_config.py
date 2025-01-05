@@ -8,12 +8,17 @@ from mirage.config.config_manager import ConfigManager
 class ShowConfigCommand(TelegramCommand):
     async def execute(self) -> None:
         strategy_configs = ConfigManager.get_all_strategy_configs()
+        strategy_managers_configs = ConfigManager.get_all_strategy_managers_configs()
+        await ChannelsManager.get_communication_channel().send_message(self._get_message_to_send(strategy_configs, strategy_managers_configs))
 
-        await ChannelsManager.get_communication_channel().send_message(self._get_message_to_send(strategy_configs))
-
-    def _get_message_to_send(self, strategy_configs: list[Config]) -> str:
-        config_strings = []
+    def _get_message_to_send(self, strategy_configs: list[Config], strategy_managers_configs: list[Config]) -> str:
+        strategy_config_strings = []
         for config in strategy_configs:
-            config_strings.append(f'{config.config_name}\n' + json.dumps(config.raw_dict))
+            strategy_config_strings.append(f'{config.config_name}\n' + json.dumps(config.raw_dict))
 
-        return 'Execution Config:\n' + json.dumps(ConfigManager.execution_config.raw_dict) + '\n\n' + '\n\n'.join(config_strings)
+        strategy_managers_config_strings = []
+        for config in strategy_managers_configs:
+            strategy_managers_config_strings.append(f'{config.config_name}\n' + json.dumps(config.raw_dict))
+
+        return 'Execution Config:\n' + json.dumps(ConfigManager.execution_config.raw_dict) + '\n\n' + \
+            '\n\n'.join(strategy_managers_config_strings) + '\n\n' + '\n\n'.join(strategy_config_strings)

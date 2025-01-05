@@ -19,6 +19,10 @@ def _get_environment_strategies_config() -> Path:
     return get_config_environment() / consts.STRATEGIES_CONFIG_FOLDER_NAME
 
 
+def _get_environment_strategy_managers_config() -> Path:
+    return get_config_environment() / consts.STRATEGY_MANAGERS_CONFIG_FOLDER_NAME
+
+
 def _save_config(config: Config, config_filepth: Path) -> None:
     with open(str(config_filepth), 'w') as file:
         json.dump(config.raw_dict, file, indent=4)
@@ -31,10 +35,36 @@ def _iterate_strategy_configs() -> Iterator[tuple[Path, dict]]:
             yield file_path, data
 
 
+def _iterate_strategy_managers_configs() -> Iterator[tuple[Path, dict]]:
+    for file_path in _get_environment_strategy_managers_config().rglob("*.json"):
+        with file_path.open('r') as file:
+            data = json.load(file)
+            yield file_path, data
+
+
 def _create_strategy_config(strategy_name: str, strategy_instance: str) -> None:
     strategy_instance_config = _get_environment_strategies_config() / strategy_name / f'{strategy_instance}.json'
     strategy_instance_config.parent.mkdir(parents=True, exist_ok=True)
     strategy_instance_config.touch()
+
+
+def _create_strategy_manager_config(strategy_manager_name: str) -> None:
+    strategy_instance_config = _get_environment_strategy_managers_config() / f'{strategy_manager_name}.json'
+    strategy_instance_config.parent.mkdir(parents=True, exist_ok=True)
+    strategy_instance_config.touch()
+
+
+def _get_strategy_manager_config_path(strategy_manager_name: str) -> Path:
+    strategy_managers_configs_folder = _get_environment_strategy_managers_config()
+
+    if not strategy_managers_configs_folder.exists():
+        raise ConfigLoadException(f'Strategy managers configs folder {str(strategy_managers_configs_folder)} not exists.')
+
+    strategy_manager_config = strategy_managers_configs_folder / f'{strategy_manager_name}.json'
+    if not strategy_manager_config.exists():
+        raise ConfigLoadException(f'Strategy manager config file {str(strategy_manager_config)} not exists.')
+
+    return strategy_manager_config
 
 
 def _get_strategy_config_path(strategy_name: str, strategy_instance: str) -> Path:
@@ -71,6 +101,14 @@ class ConfigManager:
         )
 
     @staticmethod
+    def fetch_strategy_manager_config(strategy_manager_name: str) -> Config:
+        strategy_manager_config = _get_strategy_manager_config_path(strategy_manager_name)
+        return ConfigManager.load_config_file(
+            strategy_manager_config,
+            f'Strategy manager "{strategy_manager_name}" config'
+        )
+
+    @staticmethod
     def load_main_config() -> None:
         ConfigManager.config = ConfigManager.load_config_file(get_config_environment() / consts.MAIN_CONFIG_FILENAME, 'Main config')
 
@@ -93,6 +131,18 @@ class ConfigManager:
             configs.append(Config(
                 data,
                 f'Strategy "{file_path.parent.name}" instance "{file_path.stem}" config'
+            ))
+
+        return configs
+
+    @staticmethod
+    def get_all_strategy_managers_configs() -> list[Config]:
+        configs = []
+
+        for file_path, data in _iterate_strategy_managers_configs():
+            configs.append(Config(
+                data,
+                f'Strategy manager "{file_path.stem}" config'
             ))
 
         return configs
@@ -126,6 +176,17 @@ class ConfigManager:
         _save_config(config, _get_strategy_config_path(strategy_name, strategy_instance))
 
     @staticmethod
+    def update_strategy_manager_config(config_update: Config, strategy_manager_name: str, key_to_update: str) -> None:
+        config: Config = ConfigManager.fetch_strategy_manager_config(strategy_manager_name)
+
+        dict_to_update = config.raw_dict
+        if key_to_update:
+            dict_to_update = config.get(key_to_update)
+
+        dict_to_update.update(config_update.raw_dict)
+        _save_config(config, _get_strategy_manager_config_path(strategy_manager_name))
+
+    @staticmethod
     def override_main_config(config_override: Config, key_to_override: str) -> None:
         dict_to_override = ConfigManager.config.raw_dict
         if key_to_override:
@@ -145,7 +206,7 @@ class ConfigManager:
         except ConfigLoadException:
             if key_to_override:
                 # pylint: disable=raise-missing-from
-                raise ConfigLoadException(f'Config for {strategy_name} {strategy_instance} not exists. Cant override inner key.')
+                raise ConfigLoadException(f'Config for strategy {strategy_name} {strategy_instance} not exists. Cant override inner key.')
 
             logging.info('Creating new strategy config instance. Name: %s, Instance: %s.', strategy_name, strategy_instance)
             _create_strategy_config(strategy_name, strategy_instance)
@@ -162,3 +223,30 @@ class ConfigManager:
         dict_to_override.update(config_override.raw_dict)
 
         _save_config(config, strategy_config_path)
+
+    @staticmethod
+    def override_strategy_manager_config(config_override: Config, strategy_manager_name: str, key_to_override: str) -> None:
+        strategy_manager_config_path = None
+        try:
+            strategy_manager_config_path = _get_strategy_manager_config_path(strategy_manager_name)
+
+        except ConfigLoadException:
+            if key_to_override:
+                # pylint: disable=raise-missing-from
+                raise ConfigLoadException(f'Config for strategy manager {strategy_manager_name} not exists. Cant override inner key.')
+
+            logging.info('Creating new strategy manager config: %s.', strategy_manager_name)
+            _create_strategy_manager_config(strategy_manager_name)
+            strategy_manager_config_path = _get_strategy_manager_config_path(strategy_manager_name)
+            _save_config(config_override, strategy_manager_config_path)
+            return
+
+        config: Config = ConfigManager.fetch_strategy_manager_config(strategy_manager_name)
+        dict_to_override = config.raw_dict
+        if key_to_override:
+            dict_to_override = config.get(key_to_override)
+
+        dict_to_override.clear()
+        dict_to_override.update(config_override.raw_dict)
+
+        _save_config(config, strategy_manager_config_path)

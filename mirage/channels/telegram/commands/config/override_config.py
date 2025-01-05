@@ -9,6 +9,7 @@ from mirage.config.config_manager import ConfigManager
 class OverrideConfigCommand(TelegramCommand):
     CONFIG_NAME_MAIN = 'main'
     CONFIG_NAME_STRATEGY = 'strategy'
+    CONFIG_NAME_STRATEGY_MANAGER = 'strategy-manager'
 
     ROOT_CONFIG_KEY_VALUE = 'ROOT'
 
@@ -21,7 +22,8 @@ class OverrideConfigCommand(TelegramCommand):
 
         if config_to_override not in [
             OverrideConfigCommand.CONFIG_NAME_MAIN,
-            OverrideConfigCommand.CONFIG_NAME_STRATEGY
+            OverrideConfigCommand.CONFIG_NAME_STRATEGY,
+            OverrideConfigCommand.CONFIG_NAME_STRATEGY_MANAGER
         ]:
             raise MirageTelegramException(
                 f'''Invalid config name. Available: {str([
@@ -40,8 +42,10 @@ class OverrideConfigCommand(TelegramCommand):
 
         if config_to_override == OverrideConfigCommand.CONFIG_NAME_MAIN:
             self._override_main_config(key_to_override)
-        else:
+        elif config_to_override == OverrideConfigCommand.CONFIG_NAME_STRATEGY:
             self._override_strategy_config(key_to_override)
+        else:
+            self._override_strategy_manager_config(key_to_override)
 
         await ChannelsManager.get_communication_channel().send_message('Done!')
 
@@ -64,3 +68,13 @@ class OverrideConfigCommand(TelegramCommand):
 
         config_override = Config(json.loads(self._clean_text), 'Override strategy config')
         ConfigManager.override_strategy_config(config_override, strategy_name, strategy_instance, key_to_override)
+
+    def _override_strategy_manager_config(self, key_to_override: str) -> None:
+        strategy_manager_name = self._get_top_line()
+        if not strategy_manager_name:
+            raise MirageTelegramException('Must provide strategy manager name')
+
+        self._remove_first_line()
+
+        config_override = Config(json.loads(self._clean_text), 'Override strategy manager config')
+        ConfigManager.override_strategy_manager_config(config_override, strategy_manager_name, key_to_override)

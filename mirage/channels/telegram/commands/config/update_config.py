@@ -10,6 +10,7 @@ class UpdateConfigCommand(TelegramCommand):
     CONFIG_NAME_MAIN = 'main'
     CONFIG_NAME_EXECUTION = 'execution'
     CONFIG_NAME_STRATEGY = 'strategy'
+    CONFIG_NAME_STRATEGY_MANAGER = 'strategy-manager'
 
     ROOT_CONFIG_KEY_VALUE = 'ROOT'
 
@@ -23,7 +24,8 @@ class UpdateConfigCommand(TelegramCommand):
         if config_to_update not in [
             UpdateConfigCommand.CONFIG_NAME_MAIN,
             UpdateConfigCommand.CONFIG_NAME_EXECUTION,
-            UpdateConfigCommand.CONFIG_NAME_STRATEGY
+            UpdateConfigCommand.CONFIG_NAME_STRATEGY,
+            UpdateConfigCommand.CONFIG_NAME_STRATEGY_MANAGER
         ]:
             raise MirageTelegramException(
                 f'''Invalid config name. Available: {str([
@@ -44,8 +46,10 @@ class UpdateConfigCommand(TelegramCommand):
             self._update_main_config(key_to_update)
         elif config_to_update == UpdateConfigCommand.CONFIG_NAME_EXECUTION:
             self._update_execution_config(key_to_update)
-        else:
+        elif config_to_update == UpdateConfigCommand.CONFIG_NAME_STRATEGY:
             self._update_strategy_config(key_to_update)
+        else:
+            self._update_strategy_manager_config(key_to_update)
 
         await ChannelsManager.get_communication_channel().send_message('Done!')
 
@@ -72,3 +76,13 @@ class UpdateConfigCommand(TelegramCommand):
 
         config_update = Config(json.loads(self._clean_text), 'Update strategy config')
         ConfigManager.update_strategy_config(config_update, strategy_name, strategy_instance, key_to_update)
+
+    def _update_strategy_manager_config(self, key_to_update: str) -> None:
+        strategy_manager_name = self._get_top_line()
+        if not strategy_manager_name:
+            raise MirageTelegramException('Must provide strategy manager name')
+
+        self._remove_first_line()
+
+        config_update = Config(json.loads(self._clean_text), 'Update strategy manager config')
+        ConfigManager.update_strategy_manager_config(config_update, strategy_manager_name, key_to_update)

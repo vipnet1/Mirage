@@ -21,4 +21,5 @@ class ShowConfigCommand(TelegramCommand):
             strategy_managers_config_strings.append(f'{config.config_name}\n' + json.dumps(config.raw_dict))
 
         return 'Execution Config:\n' + json.dumps(ConfigManager.execution_config.raw_dict) + '\n\n' + \
-            '\n\n'.join(strategy_managers_config_strings) + '\n\n' + '\n\n'.join(strategy_config_strings)
+               'Strategy Manager Configs:\n' + '\n\n'.join(strategy_managers_config_strings) + '\n\n' + 'Strategy Configs:\n' + \
+               '\n\n'.join(strategy_config_strings)

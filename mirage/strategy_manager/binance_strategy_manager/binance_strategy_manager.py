@@ -38,6 +38,7 @@ class BinanceStrategyManager(StrategyManager):
 
         await TransferAlgorithm(
             self._capital_flow,
+            self._spent_fees,
             self._strategy.request_data_id,
             [
                 Command(
@@ -83,6 +84,7 @@ class BinanceStrategyManager(StrategyManager):
 
         await TransferAlgorithm(
             self._capital_flow,
+            self._spent_fees,
             self._strategy.request_data_id,
             [
                 Command(
@@ -112,6 +114,7 @@ class BinanceStrategyManager(StrategyManager):
     async def _calculate_max_allowed_transfer_out_amount_usdt(self) -> float:
         fba = fetch_balance_algorithm.FetchBalanceAlgorithm(
             self._capital_flow,
+            self._spent_fees,
             self._strategy.request_data_id,
             [
                 fetch_balance_algorithm.Command(
@@ -137,6 +140,7 @@ class BinanceStrategyManager(StrategyManager):
     async def _fetch_balance(self) -> Balances:
         fba = fetch_balance_algorithm.FetchBalanceAlgorithm(
             self._capital_flow,
+            self._spent_fees,
             self._strategy.request_data_id,
             [
                 fetch_balance_algorithm.Command(

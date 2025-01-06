@@ -6,6 +6,7 @@
         "min_entry_capital": 10,
         "strategy_capital": 0,
         "capital_flow": 0,
+        "spent_fees": 0,
         "base_currency": "USDT",
         "is_active": true,
         "wallet": "spot"

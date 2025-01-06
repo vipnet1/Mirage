@@ -32,6 +32,8 @@ class StrategyManager:
     CONFIG_KEY_STRATEGY_CAPITAL = 'strategy_manager.strategy_capital'
     # How many strategy currently holds and can work with.
     CONFIG_KEY_CAPITAL_FLOW = 'strategy_manager.capital_flow'
+    # Record fees spent for more precise strategy performance analyze
+    CONFIG_KEY_SPENT_FEES = 'strategy_manager.spent_fees'
     # How many additional money can give for trade. Risk management should not consider this for calculations.
     CONFIG_KEY_CAPITAL_POOL = 'strategy_manager.capital_pool'
     # If less than this amount available do not enter trade
@@ -59,6 +61,7 @@ class StrategyManager:
         self._allocated_capital = None
         self._strategy_capital = None
         self._capital_flow = None
+        self._spent_fees = None
 
         self._reprocess_time = None
         self._reprocess_requests_count = 0
@@ -130,6 +133,9 @@ class StrategyManager:
         self._capital_flow = VariableReference(
             self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_CAPITAL_FLOW)
         )
+        self._spent_fees = VariableReference(
+            self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_SPENT_FEES)
+        )
 
     async def _process_strategy_internal(self, is_entry: bool) -> None:
         execution_status = StrategyExecutionStatus.RETURN_FUNDS
@@ -193,6 +199,7 @@ class StrategyManager:
 
             self._strategy.strategy_capital = self._strategy_capital
             self._strategy.capital_flow = self._capital_flow
+            self._strategy.spent_fees = self._spent_fees
 
             execution_status: StrategyExecutionStatus = await self._strategy.execute()
             logging.info('Executed strategy successfully')
@@ -241,6 +248,7 @@ class StrategyManager:
         self._strategy.strategy_instance_config.set(StrategyManager.CONFIG_KEY_ALLOCATED_CAPITAL, self._allocated_capital.variable)
         self._strategy.strategy_instance_config.set(StrategyManager.CONFIG_KEY_STRATEGY_CAPITAL, self._strategy_capital.variable)
         self._strategy.strategy_instance_config.set(StrategyManager.CONFIG_KEY_CAPITAL_FLOW, self._capital_flow.variable)
+        self._strategy.strategy_instance_config.set(StrategyManager.CONFIG_KEY_SPENT_FEES, self._spent_fees.variable)
         ConfigManager.update_strategy_config(
             self._strategy.strategy_instance_config, self._strategy_name, self._strategy_instance, ''
         )
@@ -300,7 +308,8 @@ class StrategyManager:
                 strategy_name=self._strategy_name,
                 strategy_instance=self._strategy_instance,
                 available_capital=self._strategy_capital.variable,
-                profit=self._capital_flow.variable - self._strategy_capital.variable
+                profit=self._capital_flow.variable - self._strategy_capital.variable,
+                fees=self._spent_fees.variable
             ))
 
         await self._transfer_capital_from_strategy()
@@ -308,6 +317,7 @@ class StrategyManager:
         self._allocated_capital.variable += self._capital_flow.variable - self._strategy_capital.variable
         self._strategy_capital.variable = 0
         self._capital_flow.variable = 0
+        self._spent_fees.variable = 0
 
     def _should_trade_strategy(self) -> bool:
         if self._strategy.strategy_instance_config.get(StrategyManager.CONFIG_KEY_IS_ACTIVE):

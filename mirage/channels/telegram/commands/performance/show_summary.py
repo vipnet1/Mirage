@@ -69,5 +69,10 @@ class PerformaceSummaryCommand(TelegramCommand):
             SummaryReportGenerator.MAX_LOSS,
             SummaryReportGenerator.MAX_PROFIT,
             SummaryReportGenerator.MAX_LOSS_PERCENT,
-            SummaryReportGenerator.MAX_PROFIT_PERCENT
+            SummaryReportGenerator.MAX_PROFIT_PERCENT,
+            SummaryReportGenerator.AVG_FEE,
+            SummaryReportGenerator.TOTAL_FEES,
+            SummaryReportGenerator.MAX_FEE,
+            SummaryReportGenerator.AVG_TRADING_CAPITAL_FEE_PERCENT,
+            SummaryReportGenerator.MAX_TRADING_CAPITAL_FEE_PERCENT
         ]

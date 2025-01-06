@@ -22,6 +22,7 @@ class BuyBtc(Strategy):
         await super().execute()
         await SimpleOrderAlgorithm(
             self.capital_flow,
+            self.spent_fees,
             self.request_data_id,
             [
                 CommandCost(

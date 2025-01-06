@@ -40,6 +40,7 @@ class Strategy:
         self.allocated_capital: VariableReference = None
         self.strategy_capital: VariableReference = None
         self.capital_flow: VariableReference = None
+        self.spent_fees: VariableReference = None
 
         self._actions_track = []
 

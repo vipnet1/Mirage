@@ -30,6 +30,11 @@ class SummaryReportGenerator:
     MAX_LOSS_PERCENT = 'Max Loss Percent'
     MAX_PROFIT_PERCENT = 'Max Profit Percent'
     AVG_CAPITAL = 'Avg Capital'
+    AVG_FEE = 'Avg Fee'
+    TOTAL_FEES = 'Total Fees'
+    MAX_FEE = 'Max Fee'
+    AVG_TRADING_CAPITAL_FEE_PERCENT = 'Avg Trading Capital Fee Percent'
+    MAX_TRADING_CAPITAL_FEE_PERCENT = 'Max Trading Capital Fee Percent'
 
     async def generate_report(self, date_from: str, date_to: str) -> list[dict[str, any]]:
         iso_date_from = iso_string_to_datetime(date_from) if date_from else None
@@ -107,6 +112,15 @@ class SummaryReportGenerator:
 
                 result[SummaryReportGenerator.STANDARD_DEVIATION] = str(std_dev_return * 100) + '%'
                 result[SummaryReportGenerator.SHARPE_RATIO] = sharpe_ratio
+
+                result[SummaryReportGenerator.TOTAL_FEES] = data[InstanceInfoProcessor.TOTAL_FEES]
+                result[SummaryReportGenerator.MAX_FEE] = data[InstanceInfoProcessor.MAX_FEE]
+                result[SummaryReportGenerator.AVG_FEE] = data[InstanceInfoProcessor.TOTAL_FEES] / records_count
+
+                avg_fee_percent = data[InstanceInfoProcessor.TOTAL_TRADING_CAPITAL_FEE_PERCENTAGE] / records_count
+                result[SummaryReportGenerator.AVG_TRADING_CAPITAL_FEE_PERCENT] = str(avg_fee_percent * 100) + '%'
+                max_fee_percent = data[InstanceInfoProcessor.MAX_TRADING_CAPITAL_FEE_PERCENTAGE]
+                result[SummaryReportGenerator.MAX_TRADING_CAPITAL_FEE_PERCENT] = str(max_fee_percent * 100) + '%'
 
                 results.append(result)
 

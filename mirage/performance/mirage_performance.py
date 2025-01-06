@@ -11,13 +11,14 @@ class InputTradePerformance:
     request_data_id: str
     strategy_name: str
     strategy_instance: str
-    available_capital: int
-    profit: int
+    available_capital: float
+    profit: float
+    fees: float
 
 
 @dataclass
 class DbTradePerformance(BaseDbRecord, InputTradePerformance):
-    profit_percent: int = None
+    profit_percent: float = None
 
 
 class MiragePerformance:

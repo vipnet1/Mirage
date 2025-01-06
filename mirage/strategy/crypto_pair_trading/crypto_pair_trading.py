@@ -147,6 +147,7 @@ class CryptoPairTrading(Strategy):
         try:
             ba = borrow_algorithm.BorrowAlgorithm(
                 self.capital_flow,
+                self.spent_fees,
                 self.request_data_id,
                 [
                     borrow_algorithm.BorrowCommand(
@@ -217,6 +218,7 @@ class CryptoPairTrading(Strategy):
         # As longed amount price may change and we won't have enough funds to buy it, we buy it with cost and then store the amount
         soa = simple_order_algorithm.SimpleOrderAlgorithm(
             self.capital_flow,
+            self.spent_fees,
             self.request_data_id,
             [
                 simple_order_algorithm.CommandCost(
@@ -246,6 +248,7 @@ class CryptoPairTrading(Strategy):
         # As we borrowed exact coins amount we sell this exact amount
         soa = simple_order_algorithm.SimpleOrderAlgorithm(
             self.capital_flow,
+            self.spent_fees,
             self.request_data_id,
             [
                 simple_order_algorithm.CommandAmount(
@@ -281,6 +284,7 @@ class CryptoPairTrading(Strategy):
         # we sell all the longed coins that we bought
         await simple_order_algorithm.SimpleOrderAlgorithm(
             self.capital_flow,
+            self.spent_fees,
             self.request_data_id,
             [
                 simple_order_algorithm.CommandAmount(
@@ -300,6 +304,7 @@ class CryptoPairTrading(Strategy):
         # We need to buy an exact amount of shorted coins to repay them.
         soa = simple_order_algorithm.SimpleOrderAlgorithm(
             self.capital_flow,
+            self.spent_fees,
             self.request_data_id,
             [
                 simple_order_algorithm.CommandAmount(
@@ -325,6 +330,7 @@ class CryptoPairTrading(Strategy):
     async def _repay_borrowed_funds(self):
         await borrow_algorithm.BorrowAlgorithm(
             self.capital_flow,
+            self.spent_fees,
             self.request_data_id,
             [
                 borrow_algorithm.RepayCommand(
@@ -353,6 +359,7 @@ class CryptoPairTrading(Strategy):
 
         fta = fetch_tickers_algorithm.FetchTickersAlgorithm(
             self.capital_flow,
+            self.spent_fees,
             self.request_data_id,
             [
                 fetch_tickers_algorithm.Command(

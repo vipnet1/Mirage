@@ -25,8 +25,9 @@ class MirageAlgorithm:
 
     description = ''
 
-    def __init__(self, capital_flow: VariableReference, request_data_id: str, commands: list[CommandBase]):
+    def __init__(self, capital_flow: VariableReference, spent_fees: VariableReference, request_data_id: str, commands: list[CommandBase]):
         self._capital_flow = capital_flow
+        self._spent_fees = spent_fees
         self._request_data_id = request_data_id
         self.commands = commands
         self.command_results = []

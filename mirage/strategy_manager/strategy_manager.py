@@ -314,7 +314,7 @@ class StrategyManager:
 
         await self._transfer_capital_from_strategy()
 
-        self._allocated_capital.variable += self._capital_flow.variable - self._strategy_capital.variable
+        self._allocated_capital.variable += self._capital_flow.variable - self._strategy_capital.variable - self._spent_fees.variable
         self._strategy_capital.variable = 0
         self._capital_flow.variable = 0
         self._spent_fees.variable = 0

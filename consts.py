@@ -54,3 +54,6 @@ MIRAGE_MAIN_BRANCH = 'main'
 MIRAGE_SECURITY_REQUEST_EXPIRATION = 120
 
 COIN_NAME_USDT = 'USDT'
+
+# suppose fee 0.1%, despite it is reduced when used BNB.
+BINANCE_TRADE_FEE = 0.001

@@ -36,6 +36,7 @@ class CryptoPairTrading(Strategy):
 
     NOTIFY_BIG_RATIO_PERCENT = 30
     REPROCESS_TIME = 5
+    IGNORE_TRADE_FEE_PERCENT_OF_STOPLOSS = 80
 
     CONFIG_KEY_MAX_LOSS_PERCENT = 'strategy.max_loss_percent'
     CONFIG_KEY_BASE_CURRENCY = 'strategy_manager.base_currency'
@@ -386,7 +387,8 @@ class CryptoPairTrading(Strategy):
         max_loss_percent = self.strategy_instance_config.get(CryptoPairTrading.CONFIG_KEY_MAX_LOSS_PERCENT)
 
         # max amount to meet stoploss percent lose
-        max_amount_can_buy = ((max_loss_percent / 100) * self.allocated_capital.variable) / abs(price - stoploss)
+        expected_max_loss = (max_loss_percent / 100) * self.allocated_capital.variable
+        max_amount_can_buy = expected_max_loss / abs(price - stoploss)
 
         long_amount = max_amount_can_buy
         short_amount = max_amount_can_buy
@@ -419,6 +421,19 @@ class CryptoPairTrading(Strategy):
                 f'Difference between bought coins {self._longed_coin}, {self._shorted_coin} is too big: {capital_diff}%. '
                 f'Still entering position, but consider changing chart ratio to remain market neutral.'
             )
+
+        # for entry & exit
+        expected_fees = 2 * consts.BINANCE_TRADE_FEE * total_capital
+        if expected_fees > (CryptoPairTrading.IGNORE_TRADE_FEE_PERCENT_OF_STOPLOSS / 100) * expected_max_loss:
+            percent = expected_fees / expected_max_loss * 100
+            pair_raw = self.strategy_data.get(CryptoPairTrading.DATA_PAIR)
+            await log_and_send(
+                logging.warning, ChannelsManager.get_communication_channel(),
+                f'Expecting to lose {percent}% on fees when max is {CryptoPairTrading.IGNORE_TRADE_FEE_PERCENT_OF_STOPLOSS}% out of '
+                + f'expected max loss {expected_max_loss}. Pair {pair_raw}. Skipping entry.'
+                + ' Consider checking why you almost spent so many on fees out of max allowed loss.'
+            )
+            raise SilentCryptoPairTradingException()
 
         # floored so math operations won't accidently result larger number leading to an error
         self._transfer_amount = floor_coin_amount(

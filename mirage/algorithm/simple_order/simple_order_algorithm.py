@@ -3,6 +3,7 @@ from abc import ABCMeta
 from dataclasses import dataclass
 import logging
 from typing import Optional
+import consts
 from mirage.algorithm.mirage_algorithm import CommandBase, MirageAlgorithm, MirageAlgorithmException
 from mirage.brokers.binance.binance import Binance
 
@@ -36,9 +37,6 @@ class CommandCost(Command):
 class SimpleOrderAlgorithm(MirageAlgorithm):
     description = 'Supports buy & sell commands in Binance using market or limit orders in cross margin or spot wallet'
 
-    # suppose fee 0.1%, despite it is reduced when used BNB. For recording spent fees on trades.
-    BINANCE_TRADE_FEE = 0.001
-
     WALLET_SPOT = 'spot'
     WALLET_MARGIN = 'margin'
 
@@ -61,7 +59,7 @@ class SimpleOrderAlgorithm(MirageAlgorithm):
             raise SimpleOrderAlgorithmException(f'Unknown {self.__class__.__name__} command')
 
         self._capital_flow.variable += order['cost'] if command.operation == SimpleOrderAlgorithm.OPERATION_SELL else -order['cost']
-        self._spent_fees.variable += order['cost'] * SimpleOrderAlgorithm.BINANCE_TRADE_FEE
+        self._spent_fees.variable += order['cost'] * consts.BINANCE_TRADE_FEE
         self.command_results.append(order)
 
     def _validate_command(self, command: CommandBase) -> None:

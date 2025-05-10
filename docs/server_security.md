@@ -3,7 +3,7 @@ As mirage does trading operations, in our interests to protect it.
 For that you need to configure everything correctly.
 
 ## Simple Operations ##
-- Https only. Mirage should accept https traffic only
+- Https only. Mirage should accept https traffic only.
 - Whitelist ips. Tradingview has known ips it can trigger webhooks from, put those in the whitelist and maybe your own ip for testing.
 - Mirage applies rate limiting.
 
@@ -20,7 +20,7 @@ But as humans make mistakes, and accidently may send http message. we need a way
 ## Mirage Protection ##
 To fulfill our protection requirements, we built multiple server validation algorithms.
 
-### Xor HmacSha256 & Replay Protectio ###
+### Xor HmacSha256 & Replay Protection ###
 As we need to do the encryption operations in tradingview pinescript, we are pretty limited, so we use whatever we can.
 - We generate 3(or more) Xor keys, each of random size 32-64 characters.
 - We generate secret 64 characters key.
@@ -30,7 +30,7 @@ The algorithm is as following:
 - Apply HmacSha256 with the secret key to the message. Put the result alongsize the message.
 - Encrypt the whole request using 3 Xor keys. Each xor applied to previous xor result.
 
-On Mirage size we:
+On Mirage side we:
 - Decrypt the whole content using 3 xor keys.
 - Check if HmacSha256 on body with secret key indeed matches the hash provided by the client.
 - Check if message with that nonce already received. If not insert it to database. If yes ignore request.
@@ -39,8 +39,7 @@ On Mirage size we:
 In this case we achieve:
 - Authentication. Only we know the secret key. Integrity test will fail for others.
 - Integrity. Changing the message or hash content will make Mirage to ignore request. 
-- Encryption. Xor is debatable encryption method. But using 3 keys will make it harder to spot patterns and therefore understand content.
-  Also, if https used(as it should), it includes better encryption.
+- Encryption. Xor is debatable encryption method. But using 3 keys will make it harder to spot patterns and therefore understand content. Also, if https used(as it should), it includes better encryption.
 - Replay protection. Malicious actor can't send same message multiple times as Mirage will reject it.
 
 ### API Key ###
@@ -76,4 +75,4 @@ But of course, recommend the better protection method for production as you are 
 Endpoint path encrypted in https protocol. We keep the endpoint a secret so it will be harder to find where to send the requests.
 
 # Possible Future todos #
-- TradingView client certificate veritication. The issue is that it is considered not easy and error prone to do this veritication on server side as need to do it manually, and often it caauses bugs/vulneraabilities. Also if want to give another ip Mirage access client certifiction verification will block it.
+- TradingView client certificate veritication. The issue is that it is considered not easy and error prone to do this veritication on server side as need to do it manually, and often it causes bugs/vulnerabilities. Also if want to give another ip Mirage access client certifiction verification will block it.

@@ -119,8 +119,8 @@ class StrategyManager:
                     await self.process_strategy()
                 else:
                     logging.warning(
-                        f'Reached max reprocess requests count: {StrategyManager.MAX_REPROCESS_REQUESTS}. Request wont be reprocessed.'
-                        + f' Strategy: {self._strategy_name}, Instance: {self._strategy_instance}.'
+                        'Reached max reprocess requests count: %s. Request wont be reprocessed. Strategy: %s, Instance: %s.',
+                        StrategyManager.MAX_REPROCESS_REQUESTS, self._strategy_name, self._strategy_instance
                     )
 
     def _init_capital_variables(self) -> None:

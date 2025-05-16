@@ -82,6 +82,6 @@ class Strategy:
     @abstractmethod
     async def _exception_revert_internal(self) -> bool:
         """
-        When exception occurrs, try revent stuff to position before trade so can refund funds.
+        When exception occurs, try revent stuff to position before trade so can refund funds.
         """
         raise NotImplementedError()

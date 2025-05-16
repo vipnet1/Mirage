@@ -6,7 +6,6 @@ from mirage.channels.trading_view.request_json import RequestJson
 from mirage.config.config_manager import ConfigManager
 from mirage.database.mongo.common_operations import insert_dict
 from mirage.strategy_manager.strategy_manager import StrategyManager
-from mirage.strategy.strategy import Strategy
 from mirage.strategy_manager import enabled_strategy_managers
 from mirage.strategy import enabled_strategies
 from mirage.utils.mirage_dict import MirageDict
